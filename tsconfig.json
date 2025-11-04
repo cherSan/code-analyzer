@@ -5,6 +5,12 @@
   "references": [
     {
       "path": "./libs/analyzer"
+    },
+    {
+      "path": "./apps/example-e2e"
+    },
+    {
+      "path": "./apps/example"
     }
   ]
 }

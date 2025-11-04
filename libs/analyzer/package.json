@@ -10,9 +10,9 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -21,6 +21,15 @@
     "!**/*.tsbuildinfo"
   ],
   "scripts": {
-    "build": "tsc && vite build"
+    "build:ui": "vite build",
+    "build:server": "tsc -p tsconfig.lib.json",
+    "build": "npm run build:ui && npm run build:server"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "open": "^10.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.5.0"
   }
 }

@@ -1,11 +1,7 @@
-#!/usr/bin/env node
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import open from 'open';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function runAnalyzer() {
     const app = express();
@@ -15,7 +11,7 @@ async function runAnalyzer() {
     console.log('🔍 Running git diff BEFORE eslint...');
     const beforeDiff = execSync('git diff', { encoding: 'utf-8' });
 
-    // 2. Запускаем eslint --fix
+    // 2. ESLint fix
     console.log('🧹 Running eslint --fix...');
     try {
         execSync('npx eslint . --fix', { stdio: 'inherit' });
@@ -28,7 +24,8 @@ async function runAnalyzer() {
     const afterDiff = execSync('git diff', { encoding: 'utf-8' });
 
     // 4. Отдаём UI и API
-    app.use('/', express.static(path.join(__dirname, 'ui')));
+    // path к dist/ui относительно текущей рабочей директории
+    app.use('/', express.static(path.join(process.cwd(), 'dist/ui')));
     app.get('/api/diff', (_, res) => {
         res.json({ before: beforeDiff, after: afterDiff });
     });
