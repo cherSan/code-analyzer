@@ -1,0 +1,12 @@
+{
+  "name": "code-analyzer-example",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "code-analyzer": "code-analyzer",
+    "dev": "echo 'Example project for testing code-analyzer'"
+  },
+  "devDependencies": {
+    "code-analyzer": "file:.."
+  }
+}
