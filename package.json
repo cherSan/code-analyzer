@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "example:test": "cd example && npm run code-analyzer",
     "example:push": "cd example && git add . && git commit -m \"Auto-update\" && git push",
     "main:push": "git add . && git commit -m \"Auto-update\" && git push",
     "push:all": "npm run example:push && npm run main:push"

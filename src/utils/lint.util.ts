@@ -15,96 +15,26 @@ export interface LintResult {
 }
 
 export class LintUtil {
-    private eslint: ESLint | null = null;
+    private eslint: ESLint;
 
     constructor() {
-        this.initESLint();
-    }
-
-    /**
-     * Initialize ESLint with project config or fallback to base config
-     */
-    private async initESLint(): Promise<void> {
-        try {
-            // Try to use project's ESLint configuration
-            this.eslint = new ESLint({
-                cwd: process.cwd(),
-                fix: false
-            });
-
-            // Test if configuration is valid
-            await this.eslint.lintText('// test');
-
-            console.log(chalk.green('✓ Using project ESLint configuration'));
-        } catch (error) {
-            // Fallback to base configuration
-            console.log(chalk.yellow('⚠ Using base ESLint configuration (no project config found)'));
-
-            this.eslint = new ESLint({
-                useEslintrc: false,
-                baseConfig: {
-                    parserOptions: {
-                        ecmaVersion: 2020,
-                        sourceType: 'module',
-                        ecmaFeatures: {
-                            jsx: true
-                        }
-                    },
-                    env: {
-                        browser: true,
-                        es2020: true,
-                        node: true
-                    },
-                    rules: {
-                        'no-unused-vars': 'warn',
-                        'no-console': 'warn',
-                        'no-debugger': 'error'
-                    }
-                }
-            } as any);
-        }
-    }
-
-    /**
-     * Get base configuration for projects to extend
-     */
-    static getBaseConfig(): any {
-        return {
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: 'module',
-                ecmaFeatures: {
-                    jsx: true
-                }
-            },
-            env: {
-                browser: true,
-                es2020: true,
-                node: true
-            },
-            rules: {
-                'no-unused-vars': 'warn',
-                'no-console': 'warn',
-                'no-debugger': 'error'
-            }
-        };
+        this.eslint = new ESLint({
+            cwd: process.cwd(),
+            fix: false
+        });
     }
 
     /**
      * Lint array of files
      */
     async lintFiles(filePaths: string[]): Promise<LintResult[]> {
-        if (!this.eslint) {
-            await this.initESLint();
-        }
-
         console.log(chalk.blue('🔍 Linting files...'));
 
         const results: LintResult[] = [];
 
         for (const filePath of filePaths) {
             try {
-                if (!this.eslint) continue;
+                console.log(chalk.gray(`  Linting: ${filePath}`));
 
                 const lintResults = await this.eslint.lintFiles([filePath]);
 
