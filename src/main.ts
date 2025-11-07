@@ -34,23 +34,23 @@ export async function main(): Promise<void> {
 
         const copiedFiles: string[] = [];
 
-        // Copy modified files with detailed logging
-        for (const filePath of modifiedFiles) {
-            const fullPath = path.resolve(process.cwd(), filePath);
-            const exists = await fs.pathExists(fullPath);
+        // Copy modified files
+        for (const absoluteFilePath of modifiedFiles) {
+            const exists = await fs.pathExists(absoluteFilePath);
+            const relativePath = path.relative(process.cwd(), absoluteFilePath);
 
-            console.log(chalk.gray(`  Checking: ${filePath} (exists: ${exists})`));
+            console.log(chalk.gray(`  Checking: ${relativePath} (exists: ${exists})`));
 
             if (exists) {
-                const analyzerPath = PathUtil.getAnalyzerPath(filePath);
+                const analyzerPath = PathUtil.getAnalyzerPath(relativePath);
                 console.log(chalk.gray(`  Copying to: ${analyzerPath}`));
 
                 await fs.ensureDir(path.dirname(analyzerPath));
-                await fs.copy(fullPath, analyzerPath);
+                await fs.copy(absoluteFilePath, analyzerPath);
                 copiedFiles.push(analyzerPath);
-                console.log(chalk.green(`✓ Copied: ${filePath}`));
+                console.log(chalk.green(`✓ Copied: ${relativePath}`));
             } else {
-                console.log(chalk.yellow(`⚠ File not found: ${filePath}`));
+                console.log(chalk.yellow(`⚠ File not found: ${relativePath}`));
             }
         }
 
