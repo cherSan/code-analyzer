@@ -9,10 +9,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build",
-    "example:install": "cd example && npm install",
-    "example:test": "cd example && npm run code-analyzer",
-    "test": "npm run build && npm run example:install && npm run example:test"
+    "example:push": "cd example && git add . && git commit -m \"Auto-update\" && git push",
+    "main:push": "git add . && git commit -m \"Auto-update\" && git push",
+    "push:all": "npm run example:push && npm run main:push"
   },
   "files": [
     "dist",
