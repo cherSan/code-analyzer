@@ -1,6 +1,5 @@
 import React from 'react';
 import * as fs from 'fs-extra';
-import * as path from 'path';
 
 interface LintIssue {
     line: number;
@@ -181,6 +180,7 @@ function FileDetails({ file, onClose }: { file: FileAnalysis; onClose: () => voi
                             <strong>Test File Issue:</strong> {file.testFileCheck.error}
                         </div>
                     )}
+
                 </div>
             </div>
         </div>
@@ -277,6 +277,14 @@ export default async function AnalyzerDashboard() {
                                                 {file.testFileCheck.isValid ? 'Valid' : file.testFileCheck.hasTestFile ? 'Wrong name' : 'Missing'}
                                             </span>
                                         </div>
+                                    </div>
+                                    <div className="file-actions">
+                                        <a
+                                            href={`/compare?file=${index}`}
+                                            className="compare-button"
+                                        >
+                                            🔍 Compare
+                                        </a>
                                     </div>
                                 </div>
                             ))}
