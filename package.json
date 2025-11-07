@@ -14,6 +14,11 @@
     "example:test": "cd example && npm run code-analyzer",
     "test": "npm run build && npm run example:install && npm run example:test"
   },
+  "files": [
+    "dist",
+    "bin",
+    "src"
+  ],
   "keywords": [
     "code",
     "analyzer",
