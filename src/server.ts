@@ -17,7 +17,7 @@ export async function startAnalysisServer(): Promise<void> {
             return;
         }
 
-        const command = `cd "${serverPath}" && npx next start -p 3001`;
+        const command = `cd "${serverPath}" && npx next dev -p 3001`;
 
         console.log(chalk.gray(`  Running: ${command}`));
 

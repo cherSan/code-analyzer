@@ -2,84 +2,112 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
 import { GitUtil } from './utils/git.util';
-import { PathUtil } from './utils/path.util';
+import { ReportUtil } from './utils/report.util';
 import { LintUtil } from './utils/lint.util';
+import { TestFileUtil } from './utils/test-file.util';
 import { startAnalysisServer } from './server';
 
 export async function main(): Promise<void> {
     console.log(chalk.blue('🚀 Code Analyzer started!'));
 
     const gitUtil = new GitUtil();
+    const reportUtil = new ReportUtil();
+    const lintUtil = new LintUtil();
+    const testFileUtil = new TestFileUtil();
 
-    // Check if we're in a git repository
     if (!await gitUtil.isGitRepository()) {
         console.error(chalk.red('❌ Not a git repository!'));
         process.exit(1);
     }
 
     const modifiedFiles = await gitUtil.getModifiedFiles();
-    console.log(chalk.blue('📝 Modified files:'), modifiedFiles);
+    console.log(chalk.blue('📝 Modified files:'), modifiedFiles.length);
 
     if (modifiedFiles.length === 0) {
         console.log(chalk.yellow('📝 No modified files found'));
         return;
     }
 
+    // Check test files first for all files
+    console.log(chalk.blue('\n🧪 Checking test files...'));
+    const testFileResults = await testFileUtil.checkTestFiles(modifiedFiles);
+    testFileUtil.printTestFileResults(testFileResults);
+
     const targetDir = '.code-analyzer';
+    await fs.remove(targetDir);
+    await fs.ensureDir(targetDir);
 
-    try {
-        // Clean target directory
-        await fs.remove(targetDir);
-        await fs.ensureDir(targetDir);
-        console.log(chalk.green(`✓ Created directory: ${targetDir}`));
+    const typescriptFiles = modifiedFiles.filter(file =>
+        file.endsWith('.ts') || file.endsWith('.tsx')
+    );
 
-        const copiedFiles: string[] = [];
+    console.log(chalk.blue('📝 TypeScript files:'), typescriptFiles.length);
 
-        // Copy modified files
-        for (const absoluteFilePath of modifiedFiles) {
-            const exists = await fs.pathExists(absoluteFilePath);
-            const relativePath = path.relative(process.cwd(), absoluteFilePath);
-
-            console.log(chalk.gray(`  Checking: ${relativePath} (exists: ${exists})`));
-
-            if (exists) {
-                const analyzerPath = PathUtil.getAnalyzerPath(relativePath);
-                console.log(chalk.gray(`  Copying to: ${analyzerPath}`));
-
-                await fs.ensureDir(path.dirname(analyzerPath));
-                await fs.copy(absoluteFilePath, analyzerPath);
-                copiedFiles.push(analyzerPath);
-                console.log(chalk.green(`✓ Copied: ${relativePath}`));
-            } else {
-                console.log(chalk.yellow(`⚠ File not found: ${relativePath}`));
-            }
-        }
-
-        console.log(chalk.blue(`✅ Copied ${copiedFiles.length} files to ${targetDir}!`));
-        console.log(chalk.blue('📝 Files to lint:'), copiedFiles);
-        // Lint the copied files only if we have any
-        if (copiedFiles.length > 0) {
-            const lintUtil = new LintUtil();
-            const lintResults = await lintUtil.lintFiles(copiedFiles);
-            console.log(chalk.blue('✅ Linting completed!', lintResults));
-            const stats = lintUtil.getStats(lintResults);
-
-            // Print summary
-            console.log(chalk.blue('\n📊 Linting Summary:'));
-            console.log(chalk.blue(`   Files: ${stats.totalFiles}`));
-            console.log(chalk.red(`   Errors: ${stats.totalErrors} (${stats.fixableErrors} fixable)`));
-            console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings} (${stats.fixableWarnings} fixable)`));
-
-            // Start analysis server
-            console.log(chalk.blue('\n🌐 Starting analysis server...'));
-            await startAnalysisServer();
-
-        } else {
-            console.log(chalk.yellow('📝 No files to lint'));
-        }
-
-    } catch (error) {
-        console.error(chalk.red('❌ Error:'), error);
-        process.exit(1);
+    if (typescriptFiles.length === 0) {
+        console.log(chalk.yellow('📝 No TypeScript files found'));
+        return;
     }
+
+    // Process each file
+    for (const filePath of typescriptFiles) {
+        if (!await fs.pathExists(filePath)) continue;
+
+        console.log(chalk.gray(`\n🔍 Analyzing: ${filePath}`));
+
+        // Get test file check for this specific file
+        const testFileCheck = testFileResults.get(filePath) || {
+            hasTestFile: false,
+            expectedTestPath: '',
+            isValid: false,
+            error: 'Not checked'
+        };
+
+        // Create copies
+        const originalCopyName = reportUtil.generateUniqueFilename(filePath, 'original');
+        const lintingCopyName = reportUtil.generateUniqueFilename(filePath, 'linting');
+
+        const originalCopyPath = path.join(targetDir, originalCopyName);
+        const lintingCopyPath = path.join(targetDir, lintingCopyName);
+
+        // Copy original file (unchanged)
+        await fs.copy(filePath, originalCopyPath);
+
+        // Copy file for linting (will be modified)
+        await fs.copy(filePath, lintingCopyPath);
+
+        // Analyze with linters
+        const { eslintReport, prettierReport } = await lintUtil.analyzeFile(lintingCopyPath);
+
+        // Add to report
+        reportUtil.addFileAnalysis({
+            originalPath: filePath,
+            originalCopyPath: originalCopyName,
+            lintingCopyPath: lintingCopyName,
+            eslintReport,
+            prettierReport,
+            gitStatus: { status: 'modified', staged: false },
+            testFileCheck: testFileCheck
+        });
+
+        console.log(chalk.green(`✓ Analyzed: ${filePath}`));
+        console.log(chalk.gray(`  ESLint: ${eslintReport.errorCount} errors, ${eslintReport.warningCount} warnings`));
+        console.log(chalk.gray(`  Prettier: ${prettierReport.changes ? 'formatted' : 'no changes'}`));
+        console.log(chalk.gray(`  Test file: ${testFileCheck.isValid ? '✓' : testFileCheck.hasTestFile ? '⚠' : '✗'}`));
+    }
+
+    // Save report
+    await reportUtil.saveReport();
+
+    // Show summary
+    const report = reportUtil.getReport();
+    console.log(chalk.blue('\n📊 Analysis Summary:'));
+    console.log(chalk.blue(`   Files: ${report.totalFiles}`));
+    console.log(chalk.red(`   ESLint Errors: ${report.summary.eslint.totalErrors}`));
+    console.log(chalk.yellow(`   ESLint Warnings: ${report.summary.eslint.totalWarnings}`));
+    console.log(chalk.green(`   Prettier Formatted: ${report.summary.prettier.formattedFiles}`));
+    console.log(chalk.blue(`   Test Files: ${report.summary.tests.hasTestFiles} valid, ${report.summary.tests.invalidTestFiles} invalid names, ${report.summary.tests.missingTestFiles} missing`));
+
+    // Start server
+    console.log(chalk.blue('\n🌐 Starting analysis server...'));
+    await startAnalysisServer();
 }
