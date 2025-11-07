@@ -65,8 +65,8 @@ export async function main(): Promise<void> {
             // Print summary
             console.log(chalk.blue('\n📊 Linting Summary:'));
             console.log(chalk.blue(`   Files: ${stats.totalFiles}`));
-            console.log(chalk.red(`   Errors: ${stats.totalErrors}`));
-            console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings}`));
+            console.log(chalk.red(`   Errors: ${stats.totalErrors} (${stats.fixableErrors} fixable)`));
+            console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings} (${stats.fixableWarnings} fixable)`));
         } else {
             console.log(chalk.yellow('📝 No files to lint'));
         }
