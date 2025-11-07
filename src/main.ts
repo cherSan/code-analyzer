@@ -106,7 +106,6 @@ export async function main(): Promise<void> {
     console.log(chalk.yellow(`   ESLint Warnings: ${report.summary.eslint.totalWarnings}`));
     console.log(chalk.green(`   Prettier Formatted: ${report.summary.prettier.formattedFiles}`));
     console.log(chalk.blue(`   Test Files: ${report.summary.tests.hasTestFiles} valid, ${report.summary.tests.invalidTestFiles} invalid names, ${report.summary.tests.missingTestFiles} missing`));
-
     // Start server
     console.log(chalk.blue('\n🌐 Starting analysis server...'));
     await startAnalysisServer();

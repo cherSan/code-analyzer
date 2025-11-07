@@ -76,13 +76,22 @@ interface AnalysisReport {
 
 async function loadAnalysis(): Promise<AnalysisReport | null> {
     try {
-        const reportPath = path.join(process.cwd(), '.code-analyzer', 'report.json');
+        const reportPath = process.env.REPORT_PATH;
+
+        if (!reportPath) {
+            console.log('REPORT_PATH environment variable not set');
+            return null;
+        }
+
+        console.log('Loading report from:', reportPath);
 
         if (await fs.pathExists(reportPath)) {
             const reportData = await fs.readJson(reportPath);
+            console.log('Report loaded successfully');
             return reportData as AnalysisReport;
         }
 
+        console.log('Report file not found at specified path');
         return null;
     } catch (error) {
         console.error('Error loading analysis:', error);
@@ -91,28 +100,15 @@ async function loadAnalysis(): Promise<AnalysisReport | null> {
 }
 
 function CommitForm({ onCommit }: { onCommit: (title: string, description: string) => void }) {
-    const [title, setTitle] = React.useState('');
-    const [description, setDescription] = React.useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (title.trim()) {
-            onCommit(title, description);
-            setTitle('');
-            setDescription('');
-        }
-    };
-
     return (
         <div className="commit-form">
             <h3>Prepare Commit</h3>
-            <form onSubmit={handleSubmit}>
+            <form>
                 <div className="form-group">
                     <label>Commit Title *</label>
                     <input
                         type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        defaultValue={''}
                         placeholder="Add feature X"
                         required
                     />
@@ -120,8 +116,7 @@ function CommitForm({ onCommit }: { onCommit: (title: string, description: strin
                 <div className="form-group">
                     <label>Commit Description</label>
                     <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        defaultValue={''}
                         placeholder="Detailed description of changes..."
                         rows={3}
                     />
@@ -207,12 +202,8 @@ export default async function AnalyzerDashboard() {
     }
 
     const ClientDashboard = () => {
-        const [selectedFile, setSelectedFile] = React.useState<FileAnalysis | null>(null);
-        const [commitMessage, setCommitMessage] = React.useState('');
-
         const handleCommit = (title: string, description: string) => {
             const fullMessage = description ? `${title}\n\n${description}` : title;
-            setCommitMessage(fullMessage);
             // Here you would integrate with git commit API
             console.log('Commit message:', fullMessage);
         };
@@ -251,7 +242,6 @@ export default async function AnalyzerDashboard() {
                                 <div
                                     key={index}
                                     className="file-card"
-                                    onClick={() => setSelectedFile(file)}
                                 >
                                     <div className="file-header">
                                         <div className="file-path">{file.originalPath}</div>
@@ -295,25 +285,8 @@ export default async function AnalyzerDashboard() {
 
                     <div className="commit-section">
                         <CommitForm onCommit={handleCommit} />
-
-                        {commitMessage && (
-                            <div className="commit-preview">
-                                <h3>Commit Preview</h3>
-                                <pre>{commitMessage}</pre>
-                                <button className="execute-button">
-                                    🚀 Execute Commit
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
-
-                {selectedFile && (
-                    <FileDetails
-                        file={selectedFile}
-                        onClose={() => setSelectedFile(null)}
-                    />
-                )}
             </div>
         );
     };
