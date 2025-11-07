@@ -7,8 +7,8 @@
     "code-analyzer": "./bin/code-analyzer.js"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc && npm run build:server",
+    "build:server": "cd server && npm run build",
     "example:test": "cd example && npm run code-analyzer",
     "example:push": "cd example && git add . && git commit -m \"Auto-update\" && git push",
     "main:push": "git add . && git commit -m \"Auto-update\" && git push",
@@ -31,15 +31,17 @@
     "@types/eslint": "^9.6.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.0.0",
+    "@types/react": "^19.2.2",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/react": "^19.2.2",
     "chalk": "^4.1.2",
     "eslint": "^8.57.0",
     "fs-extra": "^11.2.0",
+    "next": "^16.0.1",
     "prettier": "^3.6.2",
     "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "simple-git": "^3.22.0"
   }
 }
