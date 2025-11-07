@@ -12,3 +12,4 @@ yarn-error.log*
 /dist/
 /.idea/
 /example/node_modules/
+/example/.code-analyzer/
