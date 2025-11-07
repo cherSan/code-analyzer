@@ -17,6 +17,7 @@ export async function main(): Promise<void> {
     }
 
     const modifiedFiles = await gitUtil.getModifiedFiles();
+    console.log(chalk.blue('📝 Modified files:'), modifiedFiles);
 
     if (modifiedFiles.length === 0) {
         console.log(chalk.yellow('📝 No modified files found'));
@@ -33,29 +34,42 @@ export async function main(): Promise<void> {
 
         const copiedFiles: string[] = [];
 
-        // Copy modified files
+        // Copy modified files with detailed logging
         for (const filePath of modifiedFiles) {
-            if (await fs.pathExists(filePath)) {
+            const fullPath = path.resolve(process.cwd(), filePath);
+            const exists = await fs.pathExists(fullPath);
+
+            console.log(chalk.gray(`  Checking: ${filePath} (exists: ${exists})`));
+
+            if (exists) {
                 const analyzerPath = PathUtil.getAnalyzerPath(filePath);
+                console.log(chalk.gray(`  Copying to: ${analyzerPath}`));
+
                 await fs.ensureDir(path.dirname(analyzerPath));
-                await fs.copy(filePath, analyzerPath);
+                await fs.copy(fullPath, analyzerPath);
                 copiedFiles.push(analyzerPath);
                 console.log(chalk.green(`✓ Copied: ${filePath}`));
+            } else {
+                console.log(chalk.yellow(`⚠ File not found: ${filePath}`));
             }
         }
 
         console.log(chalk.blue(`✅ Copied ${copiedFiles.length} files to ${targetDir}!`));
 
-        // Lint the copied files
-        const lintUtil = new LintUtil();
-        const lintResults = await lintUtil.lintFiles(copiedFiles);
-        const stats = lintUtil.getStats(lintResults);
+        // Lint the copied files only if we have any
+        if (copiedFiles.length > 0) {
+            const lintUtil = new LintUtil();
+            const lintResults = await lintUtil.lintFiles(copiedFiles);
+            const stats = lintUtil.getStats(lintResults);
 
-        // Print summary
-        console.log(chalk.blue('\n📊 Linting Summary:'));
-        console.log(chalk.blue(`   Files: ${stats.totalFiles}`));
-        console.log(chalk.red(`   Errors: ${stats.totalErrors}`));
-        console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings}`));
+            // Print summary
+            console.log(chalk.blue('\n📊 Linting Summary:'));
+            console.log(chalk.blue(`   Files: ${stats.totalFiles}`));
+            console.log(chalk.red(`   Errors: ${stats.totalErrors}`));
+            console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings}`));
+        } else {
+            console.log(chalk.yellow('📝 No files to lint'));
+        }
 
     } catch (error) {
         console.error(chalk.red('❌ Error:'), error);
