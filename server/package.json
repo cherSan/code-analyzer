@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "tsc && npm run copy:server",
+    "copy:server": "copyfiles -u 1 \"server/**/*\" dist/",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
   }
 }

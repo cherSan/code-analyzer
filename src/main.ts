@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { GitUtil } from './utils/git.util';
 import { PathUtil } from './utils/path.util';
 import { LintUtil } from './utils/lint.util';
+import { startAnalysisServer } from './server';
 
 export async function main(): Promise<void> {
     console.log(chalk.blue('🚀 Code Analyzer started!'));
@@ -55,11 +56,12 @@ export async function main(): Promise<void> {
         }
 
         console.log(chalk.blue(`✅ Copied ${copiedFiles.length} files to ${targetDir}!`));
-
+        console.log(chalk.blue('📝 Files to lint:'), copiedFiles);
         // Lint the copied files only if we have any
         if (copiedFiles.length > 0) {
             const lintUtil = new LintUtil();
             const lintResults = await lintUtil.lintFiles(copiedFiles);
+            console.log(chalk.blue('✅ Linting completed!', lintResults));
             const stats = lintUtil.getStats(lintResults);
 
             // Print summary
@@ -67,6 +69,11 @@ export async function main(): Promise<void> {
             console.log(chalk.blue(`   Files: ${stats.totalFiles}`));
             console.log(chalk.red(`   Errors: ${stats.totalErrors} (${stats.fixableErrors} fixable)`));
             console.log(chalk.yellow(`   Warnings: ${stats.totalWarnings} (${stats.fixableWarnings} fixable)`));
+
+            // Start analysis server
+            console.log(chalk.blue('\n🌐 Starting analysis server...'));
+            await startAnalysisServer();
+
         } else {
             console.log(chalk.yellow('📝 No files to lint'));
         }

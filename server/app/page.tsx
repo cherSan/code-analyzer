@@ -21,10 +21,9 @@ interface FileAnalysis {
 async function loadAnalysis(): Promise<FileAnalysis[]> {
     try {
         const analyzerDir = path.join(process.cwd(), '.code-analyzer');
+        console.log('>>>>', analyzerDir)
 
         if (await fs.pathExists(analyzerDir)) {
-            // В реальности здесь будем читать результаты линтинга
-            // Сейчас используем демо данные
             return [
                 {
                     filePath: 'src/components/button.component.tsx',
@@ -55,7 +54,6 @@ async function loadAnalysis(): Promise<FileAnalysis[]> {
     }
 }
 
-// Серверный компонент
 export default async function AnalyzerDashboard() {
     const analysis = await loadAnalysis();
     const totalErrors = analysis.reduce((sum, file) => sum + file.errorCount, 0);

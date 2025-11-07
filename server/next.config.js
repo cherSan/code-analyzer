@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'standalone',
-    experimental: {
-        serverComponentsExternalPackages: ['fs-extra']
-    }
+    serverExternalPackages: ['fs-extra']
 };
 
 export default nextConfig;
