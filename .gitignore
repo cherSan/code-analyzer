@@ -11,5 +11,5 @@ yarn-error.log*
 .vscode/*
 /dist/
 /.idea/
-/example/node_modules/
-/example/.code-analyzer/
+/example/node_modules
+/example/.code-analyzer
