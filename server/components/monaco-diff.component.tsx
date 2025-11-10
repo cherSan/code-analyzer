@@ -10,10 +10,10 @@ interface MonacoDiffProps {
 }
 
 export default function MonacoDiff({
-                                       originalContent,
-                                       lintedContent,
-                                       fileName
-                                   }: MonacoDiffProps) {
+   originalContent,
+   lintedContent,
+   fileName
+}: MonacoDiffProps) {
     const language =
         fileName.endsWith('.tsx') ? 'typescript' :
         fileName.endsWith('.ts') ? 'typescript' :

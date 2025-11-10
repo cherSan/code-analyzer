@@ -103,12 +103,18 @@ export default async function AnalyzerDashboard() {
                                                         {file.prettierReport.changes ? 'Formatted' : 'No changes'}
                                                     </span>
                                                 </div>
-                                                <div className="preview-item">
-                                                    <span className="preview-label">Unit Tests:</span>
-                                                    <span className={file.tests.unit?.isValid ? 'preview-ok' : file.tests.unit?.hasTestFile ? 'preview-warning' : 'preview-error'}>
-                                                        {file.tests.unit?.isValid ? 'Valid' : file.tests.unit?.hasTestFile ? 'Wrong name' : 'Missing'}
-                                                    </span>
-                                                </div>
+                                                {
+                                                    file.tests.unit
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Unit Tests:</span>
+                                                                <span className={file.tests.unit?.isValid ? 'preview-ok' : file.tests.unit?.hasTestFile ? 'preview-warning' : 'preview-error'}>
+                                                                    {file.tests.unit?.isValid ? 'Valid' : file.tests.unit?.hasTestFile ? 'Wrong name' : 'Missing'}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
                                                 {
                                                     file.tests.integration
                                                         ? (

@@ -12,7 +12,11 @@ export class TestFileUtil {
         const filename = path.basename(filePath, path.extname(filePath));
         const ext = path.extname(filePath);
 
-        if (ext === '.tsx') {
+        if (
+            ext === '.tsx'
+            && !filename.endsWith('.test')
+            && !filename.endsWith('.spec')
+        ) {
             const baseName = filename.replace('.component', '');
             const integrationTestPath = path.join(dir, `${baseName}.component.test.tsx`);
             const e2eTestPath = path.join(dir, `${baseName}.spec.tsx`);
@@ -34,7 +38,11 @@ export class TestFileUtil {
                     isValid: pathExistsSync(unitTestPath),
                 }
             }
-        } else if (ext === '.ts') {
+        } else if (
+            ext === '.ts'
+            && !filename.endsWith('.test')
+            && !filename.endsWith('.spec')
+        ) {
             const unitTestPath = path.join(dir, `${filename}.test.tsx`);
             return {
                 integration: undefined,
@@ -45,7 +53,10 @@ export class TestFileUtil {
                     isValid: pathExistsSync(unitTestPath),
                 }
             }
-        } else {
+        } else if (
+            !filename.endsWith('.test')
+            && !filename.endsWith('.spec')
+        ) {
             const unitTestPath = path.join(dir, `${filename}.test.${ext}`);
             return {
                 unit: {
@@ -53,6 +64,12 @@ export class TestFileUtil {
                     path: unitTestPath,
                     isValid: pathExistsSync(unitTestPath),
                 },
+                e2e: undefined,
+                integration: undefined,
+            };
+        } else {
+            return {
+                unit: undefined,
                 e2e: undefined,
                 integration: undefined,
             };
