@@ -1,4 +1,6 @@
-export const stylisticRules = {
+import {Linter} from "eslint";
+
+export const stylisticRules: Linter.RulesRecord = {
     // Stylistic Issues
     'array-bracket-newline': ['error', 'consistent'],
     'array-bracket-spacing': ['error', 'never'],

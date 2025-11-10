@@ -1,4 +1,6 @@
-export const coreRules = {
+import {Linter} from "eslint";
+
+export const coreRules: Linter.RulesRecord = {
     // Possible Errors
     'no-console': ['error', { allow: ['warn', 'error'] }],
     'no-debugger': 'error',

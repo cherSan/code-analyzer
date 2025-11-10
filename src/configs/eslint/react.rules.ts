@@ -1,4 +1,6 @@
-export const reactRules = {
+import {Linter} from "eslint";
+
+export const reactRules: Linter.RulesRecord = {
     // React
     'react/boolean-prop-naming': 'error',
     'react/button-has-type': 'error',

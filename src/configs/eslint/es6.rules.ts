@@ -1,4 +1,6 @@
-export const es6Rules = {
+import {Linter} from "eslint";
+
+export const es6Rules: Linter.RulesRecord = {
     // ES6
     'arrow-body-style': 'error',
     'arrow-parens': ['error', 'always'],

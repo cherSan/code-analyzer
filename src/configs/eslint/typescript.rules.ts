@@ -1,4 +1,6 @@
-export const typescriptRules = {
+import {Linter} from "eslint";
+
+export const typescriptRules: Linter.RulesRecord = {
     // TypeScript
     '@typescript-eslint/adjacent-overload-signatures': 'error',
     '@typescript-eslint/array-type': 'error',
