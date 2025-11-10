@@ -74,6 +74,7 @@ interface AnalysisReport {
 }
 
 async function loadAnalysis(): Promise<AnalysisReport | null> {
+    console.log('Loading analysis report...', process.env.REPORT_PATH);
     try {
         const reportPath = process.env.REPORT_PATH;
 
@@ -190,11 +191,13 @@ function FileDetails({ file, onClose }: { file: FileAnalysis; onClose: () => voi
 export default async function AnalyzerDashboard() {
     const report = await loadAnalysis();
 
+    console.log(1111, 222);
+
     if (!report) {
         return (
             <div className="container">
                 <div className="header">
-                    <h1>🚀 Code Analyzer Dashboard</h1>
+                    <h1>🚀 Code Analyzer Dashboard!!</h1>
                     <p>No analysis report found. Run code-analyzer first.</p>
                 </div>
             </div>

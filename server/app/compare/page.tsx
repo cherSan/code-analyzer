@@ -1,7 +1,7 @@
 import React from 'react';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import MonacoDiff from "../components/monaco-diff.component";
+import MonacoDiff from "@/components/monaco-diff.component";
 
 interface FileComparisonProps {
     originalContent: string;

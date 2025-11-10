@@ -10,7 +10,7 @@ export async function startAnalysisServer(): Promise<void> {
         console.log(chalk.blue('🚀 Starting Next.js server on http://localhost:3001'));
         console.log(chalk.green(`📊 Report path: ${reportPath}`));
 
-        const command = `cd "${serverPath}" && npx next dev -p 3001`;
+        const command = `cd "${serverPath}" && npm run dev`;
 
         console.log(chalk.gray(`  Running: ${command}`));
 
