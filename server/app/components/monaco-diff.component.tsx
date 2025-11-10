@@ -33,7 +33,13 @@ export default function MonacoDiff({
                 options={{
                     readOnly: false,
                     renderValidationDecorations: 'on',
+                    renderFinalNewline: 'on',
+                    unusualLineTerminators: 'auto',
+                    selectOnLineNumbers: true,
+                    renderControlCharacters: true,
+                    showDeprecated: true,
                     renderIndicators: true,
+                    dragAndDrop: true,
                     originalEditable: false,
                     fontSize: 14,
                     wordWrap: 'on',
