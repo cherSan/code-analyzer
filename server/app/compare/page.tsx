@@ -4,12 +4,12 @@ import {getFileContent, retrieveFileAnalyticData} from "@/lib/analyzer-report";
 import {FileAnalysis} from "@/types/analyzer.types";
 
 function FileComparison({
-                            originalContent,
-                            lintingContent,
-                            originalPath,
-                            eslintReport,
-                            prettierReport
-                        }: FileAnalysis & { originalContent: string; lintingContent: string }) {
+    originalContent,
+    lintingContent,
+    originalPath,
+    eslintReport,
+    prettierReport
+}: FileAnalysis & { originalContent: string; lintingContent: string }) {
     return (
         <div className="comparison-container">
             <div className="comparison-header">

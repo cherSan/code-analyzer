@@ -28,7 +28,6 @@ export async function main(): Promise<void> {
         return;
     }
 
-    // Check test files first for all files
     console.log(chalk.blue('\n🧪 Checking test files...'));
     const testFileResults = await testFileUtil.checkTestFiles(modifiedFiles);
     testFileUtil.printTestFileResults(testFileResults);
@@ -48,21 +47,13 @@ export async function main(): Promise<void> {
         return;
     }
 
-    // Process each file
     for (const filePath of typescriptFiles) {
         if (!fs.pathExistsSync(filePath)) continue;
 
         console.log(chalk.gray(`\n🔍 Analyzing: ${filePath}`));
 
-        // Get test file check for this specific file
-        const testFileCheck = testFileResults.get(filePath) || {
-            hasTestFile: false,
-            expectedTestPath: '',
-            isValid: false,
-            error: 'Not checked'
-        };
+        const testFileCheck = testFileResults.get(filePath)!;
 
-        // Create copies
         const originalCopyName = reportUtil.generateUniqueFilename(filePath, 'original');
         const lintingCopyName = reportUtil.generateUniqueFilename(filePath, 'linting');
 
@@ -81,19 +72,16 @@ export async function main(): Promise<void> {
             eslintReport,
             prettierReport,
             gitStatus: { status: 'modified', staged: false },
-            testFileCheck: testFileCheck
+            tests: testFileCheck
         });
 
         console.log(chalk.green(`✓ Analyzed: ${filePath}`));
         console.log(chalk.gray(`  ESLint: ${eslintReport.errorCount} errors, ${eslintReport.warningCount} warnings`));
         console.log(chalk.gray(`  Prettier: ${prettierReport.changes ? 'formatted' : 'no changes'}`));
-        console.log(chalk.gray(`  Test file: ${testFileCheck.isValid ? '✓' : testFileCheck.hasTestFile ? '⚠' : '✗'}`));
     }
 
-    // Save report
     await reportUtil.saveReport();
 
-    // Show summary
     const report = reportUtil.getReport();
     console.log(chalk.blue('\n📊 Analysis Summary:'));
     console.log(chalk.blue(`   Files: ${report.totalFiles}`));
@@ -101,7 +89,6 @@ export async function main(): Promise<void> {
     console.log(chalk.yellow(`   ESLint Warnings: ${report.summary.eslint.totalWarnings}`));
     console.log(chalk.green(`   Prettier Formatted: ${report.summary.prettier.formattedFiles}`));
     console.log(chalk.blue(`   Test Files: ${report.summary.tests.hasTestFiles} valid, ${report.summary.tests.invalidTestFiles} invalid names, ${report.summary.tests.missingTestFiles} missing`));
-    // Start server
     console.log(chalk.blue('\n🌐 Starting analysis server...'));
     await startAnalysisServer();
 }

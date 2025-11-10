@@ -54,13 +54,15 @@ export class ReportUtil {
 
         // Update Test summary
         this.report.summary.tests.totalFiles++;
-        if (analysis.testFileCheck.isValid) {
-            this.report.summary.tests.hasTestFiles++;
-        } else if (analysis.testFileCheck.hasTestFile) {
-            this.report.summary.tests.invalidTestFiles++;
-        } else {
-            this.report.summary.tests.missingTestFiles++;
-        }
+
+        if (analysis.tests.unit?.isValid) this.report.summary.tests.hasTestFiles++;
+        else this.report.summary.tests.missingTestFiles++;
+
+        if (analysis.tests.e2e?.isValid) this.report.summary.tests.hasTestFiles++;
+        else this.report.summary.tests.missingTestFiles++;
+
+        if (analysis.tests.integration?.isValid) this.report.summary.tests.hasTestFiles++;
+        else this.report.summary.tests.missingTestFiles++;
     }
 
     /**

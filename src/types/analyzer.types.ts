@@ -56,10 +56,15 @@ export interface GitFileStatus {
     staged: boolean;
 }
 
+export interface TestTypes {
+    unit?: TestFileCheck;
+    integration?: TestFileCheck;
+    e2e?: TestFileCheck;
+}
+
 export interface TestFileCheck {
     hasTestFile: boolean;
-    expectedTestPath: string;
-    actualTestPath?: string;
+    path: string;
     isValid: boolean;
     error?: string;
 }
@@ -71,7 +76,7 @@ export interface FileAnalysis {
     eslintReport: ESLintReport;
     prettierReport: PrettierReport;
     gitStatus: GitFileStatus;
-    testFileCheck: TestFileCheck; // Добавляем проверку тестов
+    tests: TestTypes;
 }
 
 export interface AnalysisReport {

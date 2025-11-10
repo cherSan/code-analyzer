@@ -1,78 +1,69 @@
-import * as fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
-
-export interface TestFileCheck {
-    hasTestFile: boolean;
-    expectedTestPath: string;
-    actualTestPath?: string;
-    isValid: boolean;
-    error?: string;
-}
+import {pathExistsSync} from "fs-extra";
+import {TestTypes} from "../types/analyzer.types";
 
 export class TestFileUtil {
     /**
      * Check if file has corresponding test file
      */
-    async checkTestFile(filePath: string): Promise<TestFileCheck> {
+    async checkTestFile(filePath: string): Promise<TestTypes> {
         const dir = path.dirname(filePath);
         const filename = path.basename(filePath, path.extname(filePath));
         const ext = path.extname(filePath);
 
-        let expectedTestPath: string;
-
-        // Determine expected test file name based on file type
         if (ext === '.tsx') {
-            // For React components: [filename].component.test.tsx
-            const baseName = filename.replace('.component', ''); // Убираем .component если уже есть
-            expectedTestPath = path.join(dir, `${baseName}.component.test.tsx`);
-        } else if (ext === '.ts') {
-            // For TypeScript files: [filename].test.ts
-            expectedTestPath = path.join(dir, `${filename}.test.ts`);
-        } else {
+            const baseName = filename.replace('.component', '');
+            const integrationTestPath = path.join(dir, `${baseName}.component.test.tsx`);
+            const e2eTestPath = path.join(dir, `${baseName}.spec.tsx`);
+            const unitTestPath = path.join(dir, `${baseName}.test.tsx`);
             return {
-                hasTestFile: false,
-                expectedTestPath: '',
-                isValid: true,
-                error: `Skipped file type: ${ext}`
+                integration: {
+                    hasTestFile: pathExistsSync(integrationTestPath),
+                    path: integrationTestPath,
+                    isValid: pathExistsSync(integrationTestPath),
+                },
+                e2e: {
+                    hasTestFile: pathExistsSync(e2eTestPath),
+                    path: e2eTestPath,
+                    isValid: pathExistsSync(e2eTestPath),
+                },
+                unit: {
+                    hasTestFile: pathExistsSync(unitTestPath),
+                    path: unitTestPath,
+                    isValid: pathExistsSync(unitTestPath),
+                }
+            }
+        } else if (ext === '.ts') {
+            const unitTestPath = path.join(dir, `${filename}.test.tsx`);
+            return {
+                integration: undefined,
+                e2e: undefined,
+                unit: {
+                    hasTestFile: pathExistsSync(unitTestPath),
+                    path: unitTestPath,
+                    isValid: pathExistsSync(unitTestPath),
+                }
+            }
+        } else {
+            const unitTestPath = path.join(dir, `${filename}.test.${ext}`);
+            return {
+                unit: {
+                    hasTestFile: pathExistsSync(unitTestPath),
+                    path: unitTestPath,
+                    isValid: pathExistsSync(unitTestPath),
+                },
+                e2e: undefined,
+                integration: undefined,
             };
         }
-
-        const exists = await fs.pathExists(expectedTestPath);
-
-        // Also check for common alternative test file patterns
-        const alternativePatterns = [
-            path.join(dir, `${filename}.test${ext}`),
-            path.join(dir, `${filename}.spec${ext}`),
-            path.join(dir, `${filename}.component.spec.tsx`),
-            path.join(dir, '__tests__', `${filename}.test${ext}`),
-            path.join(dir, '__tests__', `${filename}.spec${ext}`),
-            path.join(dir, 'tests', `${filename}.test${ext}`),
-            path.join(dir, 'tests', `${filename}.spec${ext}`)
-        ];
-
-        let actualTestPath: string | undefined;
-        for (const pattern of alternativePatterns) {
-            if (await fs.pathExists(pattern)) {
-                actualTestPath = pattern;
-                break;
-            }
-        }
-
-        return {
-            hasTestFile: exists || !!actualTestPath,
-            expectedTestPath,
-            actualTestPath,
-            isValid: exists, // Only valid if it matches the expected pattern
-            error: !exists && !actualTestPath ? `Missing test file: ${path.basename(expectedTestPath)}` : undefined
-        };
     }
 
     /**
      * Check test files for multiple files
      */
-    async checkTestFiles(filePaths: string[]): Promise<Map<string, TestFileCheck>> {
-        const results = new Map<string, TestFileCheck>();
+    async checkTestFiles(filePaths: string[]): Promise<Map<string, TestTypes>> {
+        const results = new Map<string, TestTypes>();
 
         for (const filePath of filePaths) {
             const check = await this.checkTestFile(filePath);
@@ -85,30 +76,22 @@ export class TestFileUtil {
     /**
      * Print test file check results
      */
-    printTestFileResults(results: Map<string, TestFileCheck>): void {
+    printTestFileResults(results: Map<string, TestTypes>): void {
         let missingTests = 0;
         let invalidTests = 0;
         let validTests = 0;
 
         console.log(chalk.blue('\n🧪 Test File Analysis:'));
 
-        for (const [filePath, check] of results) {
-            const relativePath = path.relative(process.cwd(), filePath);
+        for (const [_, check] of results) {
+            if (check.unit?.isValid) validTests++;
+            else missingTests++;
 
-            if (check.isValid) {
-                console.log(chalk.green(`✓ ${relativePath} - Has proper test file`));
-                validTests++;
-            } else if (check.hasTestFile && check.actualTestPath) {
-                const actualRelative = path.relative(process.cwd(), check.actualTestPath);
-                console.log(chalk.yellow(`⚠ ${relativePath} - Has test file but wrong name/naming`));
-                console.log(chalk.gray(`  Expected: ${path.basename(check.expectedTestPath)}`));
-                console.log(chalk.gray(`  Actual: ${actualRelative}`));
-                invalidTests++;
-            } else {
-                console.log(chalk.red(`✗ ${relativePath} - Missing test file`));
-                console.log(chalk.gray(`  Expected: ${path.basename(check.expectedTestPath)}`));
-                missingTests++;
-            }
+            if (check.e2e?.isValid) validTests++;
+            else missingTests++;
+
+            if (check.integration?.isValid) validTests++;
+            else missingTests++;
         }
 
         console.log(chalk.blue('\n📊 Test File Summary:'));
