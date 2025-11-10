@@ -41,6 +41,7 @@ export class LintUtil {
         };
 
         this.eslint = new ESLint({
+            useEslintrc: false,
             ignore: false,
             baseConfig: baseConfig,
             fix: true
