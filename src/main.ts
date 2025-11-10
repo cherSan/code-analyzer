@@ -33,7 +33,7 @@ export async function main(): Promise<void> {
     const testFileResults = await testFileUtil.checkTestFiles(modifiedFiles);
     testFileUtil.printTestFileResults(testFileResults);
 
-    const targetDir = '.code-analyzer';
+    const targetDir = path.join(process.cwd(), '.code-analyzer');
     await fs.remove(targetDir);
     await fs.ensureDir(targetDir);
 
@@ -50,7 +50,7 @@ export async function main(): Promise<void> {
 
     // Process each file
     for (const filePath of typescriptFiles) {
-        if (!await fs.pathExists(filePath)) continue;
+        if (!fs.pathExistsSync(filePath)) continue;
 
         console.log(chalk.gray(`\n🔍 Analyzing: ${filePath}`));
 
@@ -68,21 +68,16 @@ export async function main(): Promise<void> {
 
         const originalCopyPath = path.join(targetDir, originalCopyName);
         const lintingCopyPath = path.join(targetDir, lintingCopyName);
-
-        // Copy original file (unchanged)
-        await fs.copy(filePath, originalCopyPath);
-
-        // Copy file for linting (will be modified)
-        await fs.copy(filePath, lintingCopyPath);
-
-        // Analyze with linters
-        const { eslintReport, prettierReport } = await lintUtil.analyzeFile(lintingCopyPath);
-
-        // Add to report
+        const originalContent = fs.readFileSync(filePath, 'utf8');
+        const eslintReport = await lintUtil.eslintReport(filePath);
+        const prettierReport = await lintUtil.prettierReport(filePath);
+        fs.writeFileSync(lintingCopyPath, prettierReport.output || originalContent);
+        fs.writeFileSync(originalCopyPath, originalContent);
+        fs.writeFileSync(filePath, originalContent);
         reportUtil.addFileAnalysis({
             originalPath: filePath,
-            originalCopyPath: originalCopyName,
-            lintingCopyPath: lintingCopyName,
+            originalCopyPath: originalCopyPath,
+            lintingCopyPath: lintingCopyPath,
             eslintReport,
             prettierReport,
             gitStatus: { status: 'modified', staged: false },

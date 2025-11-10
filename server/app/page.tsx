@@ -1,103 +1,8 @@
 import React from 'react';
-import * as fs from 'fs-extra';
-
-interface LintIssue {
-    line: number;
-    column: number;
-    ruleId: string | null;
-    message: string;
-    severity: number;
-    nodeType: string | null;
-    source: string | null;
-    endLine?: number;
-    endColumn?: number;
-}
-
-interface TestFileCheck {
-    hasTestFile: boolean;
-    expectedTestPath: string;
-    actualTestPath?: string;
-    isValid: boolean;
-    error?: string;
-}
-
-interface FileAnalysis {
-    originalPath: string;
-    originalCopyPath: string;
-    lintingCopyPath: string;
-    eslintReport: {
-        errorCount: number;
-        warningCount: number;
-        fixableErrorCount: number;
-        fixableWarningCount: number;
-        messages: LintIssue[];
-        fixed: boolean;
-        output?: string;
-    };
-    prettierReport: {
-        formatted: boolean;
-        changes: boolean;
-        input: string;
-        output: string;
-    };
-    gitStatus: {
-        status: string;
-        staged: boolean;
-    };
-    testFileCheck: TestFileCheck;
-}
-
-interface AnalysisReport {
-    timestamp: string;
-    totalFiles: number;
-    totalErrors: number;
-    totalWarnings: number;
-    files: FileAnalysis[];
-    summary: {
-        eslint: {
-            totalErrors: number;
-            totalWarnings: number;
-            fixableErrors: number;
-            fixableWarnings: number;
-        };
-        prettier: {
-            formattedFiles: number;
-            totalFiles: number;
-        };
-        tests: {
-            totalFiles: number;
-            hasTestFiles: number;
-            missingTestFiles: number;
-            invalidTestFiles: number;
-        };
-    };
-}
-
-async function loadAnalysis(): Promise<AnalysisReport | null> {
-    console.log('Loading analysis report...', process.env.REPORT_PATH);
-    try {
-        const reportPath = process.env.REPORT_PATH;
-
-        if (!reportPath) {
-            console.log('REPORT_PATH environment variable not set');
-            return null;
-        }
-
-        console.log('Loading report from:', reportPath);
-
-        if (await fs.pathExists(reportPath)) {
-            const reportData = await fs.readJson(reportPath);
-            console.log('Report loaded successfully');
-            return reportData as AnalysisReport;
-        }
-
-        console.log('Report file not found at specified path');
-        return null;
-    } catch (error) {
-        console.error('Error loading analysis:', error);
-        return null;
-    }
-}
+import Link from "next/link";
+import {Button} from "@/components/ui/button";
+import {retrieveAnalyticData} from "@/lib/analyzer-report";
+import {FileAnalysis} from "@/types/analyzer.types";
 
 function CommitForm({ onCommit }: { onCommit: (title: string, description: string) => void }) {
     return (
@@ -189,10 +94,7 @@ function FileDetails({ file, onClose }: { file: FileAnalysis; onClose: () => voi
 }
 
 export default async function AnalyzerDashboard() {
-    const report = await loadAnalysis();
-
-    console.log(1111, 222);
-
+    const report = await retrieveAnalyticData();
     if (!report) {
         return (
             <div className="container">
@@ -282,12 +184,11 @@ export default async function AnalyzerDashboard() {
                                         </div>
                                     </div>
                                     <div className="file-actions">
-                                        <a
+                                        <Link
                                             href={`/compare?file=${index}`}
-                                            className="compare-button"
                                         >
-                                            🔍 Compare
-                                        </a>
+                                            <Button type="button" variant="link">🔍 Compare</Button>
+                                        </Link>
                                     </div>
                                 </div>
                             ))}

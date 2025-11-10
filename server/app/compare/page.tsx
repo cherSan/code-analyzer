@@ -1,27 +1,19 @@
 import React from 'react';
-import * as fs from 'fs-extra';
-import * as path from 'path';
 import MonacoDiff from "@/components/monaco-diff.component";
-
-interface FileComparisonProps {
-    originalContent: string;
-    lintedContent: string;
-    fileName: string;
-    eslintReport: any;
-    prettierReport: any;
-}
+import {getFileContent, retrieveFileAnalyticData} from "@/lib/analyzer-report";
+import {FileAnalysis} from "@/types/analyzer.types";
 
 function FileComparison({
                             originalContent,
-                            lintedContent,
-                            fileName,
+                            lintingContent,
+                            originalPath,
                             eslintReport,
                             prettierReport
-                        }: FileComparisonProps) {
+                        }: FileAnalysis & { originalContent: string; lintingContent: string }) {
     return (
         <div className="comparison-container">
             <div className="comparison-header">
-                <h1>🔍 File Comparison: {fileName}</h1>
+                <h1>🔍 File Comparison: {originalPath}</h1>
                 <div className="file-stats">
                     <div className="stat">
                         <span className="stat-label">ESLint:</span>
@@ -38,90 +30,57 @@ function FileComparison({
                 </div>
             </div>
 
-            <div className="editor-container">
-                <MonacoDiff
-                    originalContent={originalContent}
-                    lintedContent={lintedContent}
-                    fileName={fileName}
-                />
-            </div>
+            <MonacoDiff
+                originalContent={originalContent}
+                lintedContent={lintingContent}
+                fileName={originalPath}
+            />
 
             <div className="changes-summary">
                 <h3>Changes Summary</h3>
                 <div className="changes-grid">
                     <div className="change-item">
-                        <span className="change-label">Original File:</span>
+                        <span className="change-label">Original:</span>
                         <span className="change-value">{originalContent.length} characters</span>
                     </div>
                     <div className="change-item">
-                        <span className="change-label">Linted File:</span>
-                        <span className="change-value">{lintedContent.length} characters</span>
+                        <span className="change-label">Linted:</span>
+                        <span className="change-value">{lintingContent.length} characters</span>
                     </div>
                     <div className="change-item">
-                        <span className="change-label">ESLint Fixed:</span>
-                        <span className={`change-value ${eslintReport.fixed ? 'fixed' : 'no-fix'}`}>
+                        <span className="change-label">ESLint:</span>
+                        <span className={`change-value ${eslintReport.fixed ? 'changed' : 'unchanged'}`}>
                             {eslintReport.fixed ? 'Yes' : 'No'}
                         </span>
                     </div>
                     <div className="change-item">
-                        <span className="change-label">Prettier Changes:</span>
+                        <span className="change-label">Prettier:</span>
                         <span className={`change-value ${prettierReport.changes ? 'changed' : 'unchanged'}`}>
                             {prettierReport.changes ? 'Yes' : 'No'}
                         </span>
                     </div>
                 </div>
             </div>
+
+            <div className="changes-summary">
+                <h3 className="error">Errors</h3>
+                {
+                    eslintReport?.messages?.length === 0
+                        ? <p>No ESLint errors found.</p>
+                        : (
+                            <ul className="error-list">
+                                {eslintReport.messages.map((msg, index) => (
+                                    <li key={index} className="error-item">
+                                        <span className="error-location">Line {msg.line}, Col {msg.column}:</span>
+                                        <span className="error-message">{msg.message} {msg.ruleId && `(Rule: ${msg.ruleId})`}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )
+                }
+            </div>
         </div>
     );
-}
-
-async function loadComparisonData(fileIndex: number): Promise<FileComparisonProps | null> {
-    try {
-        console.log(fileIndex)
-        const reportPath = process.env.REPORT_PATH;
-        if (!reportPath) {
-            console.log('REPORT_PATH not set');
-            return null;
-        }
-
-        console.log('Loading comparison data from:', reportPath);
-
-        if (await fs.pathExists(reportPath)) {
-            const reportData = await fs.readJson(reportPath);
-            const file = reportData.files[fileIndex];
-
-            if (file) {
-                const analyzerDir = path.dirname(reportPath);
-                const originalContent = await fs.readFile(
-                    path.join(analyzerDir, file.originalCopyPath),
-                    'utf8'
-                );
-                const lintedContent = await fs.readFile(
-                    path.join(analyzerDir, file.lintingCopyPath),
-                    'utf8'
-                );
-
-                console.log(`Loaded file: ${file.originalPath}`);
-
-                return {
-                    originalContent,
-                    lintedContent,
-                    fileName: file.originalPath,
-                    eslintReport: file.eslintReport,
-                    prettierReport: file.prettierReport
-                };
-            } else {
-                console.log(`File index ${fileIndex} not found in report`);
-            }
-        } else {
-            console.log('Report file not found at:', reportPath);
-        }
-
-        return null;
-    } catch (error) {
-        console.error('Error loading comparison data:', error);
-        return null;
-    }
 }
 
 interface ComparePageProps {
@@ -129,24 +88,13 @@ interface ComparePageProps {
 }
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
-    // Ожидаем searchParams так как это Promise
     const params = await searchParams;
     const fileIndex = params.file ? parseInt(params.file) : -1;
+    const data = await retrieveFileAnalyticData(fileIndex);
+    const originalContent = getFileContent(data?.originalPath);
+    const lintingContent = getFileContent(data?.lintingCopyPath);
 
-    if (fileIndex === -1) {
-        return (
-            <div className="container">
-                <div className="header">
-                    <h1>🔍 File Comparison</h1>
-                    <p>No file specified. Please select a file from the dashboard.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const comparisonData = await loadComparisonData(fileIndex);
-
-    if (!comparisonData) {
+    if (!data || !originalContent || !lintingContent) {
         return (
             <div className="container">
                 <div className="header">
@@ -157,5 +105,12 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         );
     }
 
-    return <FileComparison {...comparisonData} />;
+
+    return (
+        <FileComparison
+            {...data}
+            originalContent={originalContent}
+            lintingContent={lintingContent}
+        />
+    );
 }

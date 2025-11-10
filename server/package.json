@@ -7,5 +7,12 @@
     "dev": "next dev -p 3001",
     "start": "next start -p 3001",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.4"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3"
   }
 }

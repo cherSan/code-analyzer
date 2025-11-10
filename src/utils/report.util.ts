@@ -78,11 +78,4 @@ export class ReportUtil {
     getReport(): AnalysisReport {
         return this.report;
     }
-
-    /**
-     * Get report file path
-     */
-    getReportPath(): string {
-        return this.reportPath;
-    }
 }

@@ -23,12 +23,12 @@ export default function MonacoDiff({
         fileName.endsWith('.json') ? 'json' : 'typescript';
 
     return (
-        <div className="monaco-diff-container">
+        <div className="monaco-diff-container" style={{ height: '500px'}}>
             <DiffEditor
                 height="500px"
                 language={language}
-                original={lintedContent}
-                modified={originalContent}
+                original={originalContent}
+                modified={lintedContent}
                 theme="vs-dark"
                 options={{
                     readOnly: false,
@@ -46,6 +46,10 @@ export default function MonacoDiff({
                     minimap: { enabled: false },
                     renderSideBySide: true,
                     scrollBeyondLastLine: false,
+                    diffAlgorithm: 'advanced',
+                    diffWordWrap: 'on',
+                    enableSplitViewResizing: false,
+                    renderLineHighlight: 'all',
                 }}
             />
         </div>

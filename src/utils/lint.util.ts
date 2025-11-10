@@ -1,4 +1,4 @@
-import { ESLint } from 'eslint';
+import {ESLint, Linter} from 'eslint';
 import prettier from 'prettier';
 import * as fs from 'fs-extra';
 import { ESLintReport, PrettierReport, ESLintMessage } from '../types/analyzer.types';
@@ -9,41 +9,42 @@ export class LintUtil {
     private eslint: ESLint;
 
     constructor() {
-        this.eslint = new ESLint({
-            useEslintrc: false,
-            ignore: false,
-            baseConfig: {
-                parser: '@typescript-eslint/parser',
-                parserOptions: {
-                    ecmaVersion: 2020,
-                    sourceType: 'module',
-                    ecmaFeatures: {
-                        jsx: true
-                    },
-                    project: './tsconfig.json',
-                    warnOnUnsupportedTypeScriptVersion: false
+        const baseConfig: Linter.Config = {
+            parser: '@typescript-eslint/parser',
+            parserOptions: {
+                ecmaVersion: 2020,
+                sourceType: 'module',
+                ecmaFeatures: {
+                    jsx: true
                 },
-                env: {
-                    browser: true,
-                    es2020: true,
-                    node: true
-                },
-                settings: {
-                    react: {
-                        version: 'detect'
-                    }
-                },
-                plugins: [
-                    '@typescript-eslint',
-                    'react',
-                    'react-hooks',
-                    'jsx-a11y',
-                    'import'
-                ],
-                rules: esLintRules
+                project: './tsconfig.json',
+                warnOnUnsupportedTypeScriptVersion: false
             },
+            env: {
+                browser: true,
+                es2020: true,
+                node: true
+            },
+            settings: {
+                react: {
+                    version: 'detect'
+                }
+            },
+            plugins: [
+                '@typescript-eslint',
+                'react',
+                'react-hooks',
+                'jsx-a11y',
+                'import'
+            ],
+            rules: esLintRules
+        };
+
+        this.eslint = new ESLint({
+            ignore: false,
+            baseConfig: baseConfig,
             fix: true
-        } as any);
+        });
     }
 
     /**
@@ -78,13 +79,7 @@ export class LintUtil {
     /**
      * Analyze single file and return report
      */
-    async analyzeFile(filePath: string): Promise<{
-        eslintReport: ESLintReport;
-        prettierReport: PrettierReport;
-    }> {
-        const originalContent = await fs.readFile(filePath, 'utf8');
-
-        // ESLint analysis
+    async eslintReport(filePath: string): Promise<ESLintReport> {
         const eslintResults = await this.eslint.lintFiles([filePath]);
         const eslintResult = eslintResults[0] || {
             messages: [],
@@ -94,12 +89,13 @@ export class LintUtil {
             fixableWarningCount: 0
         };
 
-        // Convert ESLint messages to our format
-        const messages: ESLintMessage[] = eslintResult.messages.map(msg =>
-            this.convertESLintMessage(msg)
+        const messages: ESLintMessage[] = eslintResult.messages.map(
+            msg => this.convertESLintMessage(msg)
         );
 
-        const eslintReport: ESLintReport = {
+        if (eslintResult.output) fs.writeFileSync(filePath, eslintResult.output);
+
+        return {
             errorCount: eslintResult.errorCount,
             warningCount: eslintResult.warningCount,
             fixableErrorCount: eslintResult.fixableErrorCount,
@@ -108,24 +104,14 @@ export class LintUtil {
             fixed: !!eslintResult.output,
             output: eslintResult.output
         };
-
-        // Apply fixes if any
-        if (eslintResult.output) {
-            await fs.writeFile(filePath, eslintResult.output);
-        }
-
-        // Prettier analysis
-        const prettierReport = await this.analyzeWithPrettier(filePath);
-
-        return { eslintReport, prettierReport };
     }
 
     /**
      * Analyze file with Prettier
      */
-    private async analyzeWithPrettier(filePath: string): Promise<PrettierReport> {
+    async prettierReport(filePath: string): Promise<PrettierReport> {
         try {
-            const content = await fs.readFile(filePath, 'utf8');
+            const content = fs.readFileSync(filePath, 'utf8');
             const fileInfo = await prettier.getFileInfo(filePath);
 
             if (fileInfo.ignored || !fileInfo.inferredParser) {
@@ -145,7 +131,7 @@ export class LintUtil {
 
             return { formatted: true, changes, input: content, output: formatted };
         } catch (error) {
-            const content = await fs.readFile(filePath, 'utf8');
+            const content = fs.readFileSync(filePath, 'utf8');
             return { formatted: false, changes: false, input: content, output: content };
         }
     }
