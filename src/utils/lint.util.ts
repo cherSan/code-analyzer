@@ -1,9 +1,9 @@
 import {ESLint, Linter} from 'eslint';
 import prettier from 'prettier';
-import * as fs from 'fs-extra';
 import { ESLintReport, PrettierReport, ESLintMessage } from '../types/analyzer.types';
 import { esLintRules } from '../configs/eslint';
 import { prettierRules } from '../configs/prettier';
+import { readFileSync } from "fs-extra";
 
 export class LintUtil {
     private eslint: ESLint;
@@ -44,7 +44,7 @@ export class LintUtil {
             useEslintrc: false,
             ignore: false,
             baseConfig: baseConfig,
-            fix: true
+            fix: false,
         });
     }
 
@@ -82,19 +82,11 @@ export class LintUtil {
      */
     async eslintReport(filePath: string): Promise<ESLintReport> {
         const eslintResults = await this.eslint.lintFiles([filePath]);
-        const eslintResult = eslintResults[0] || {
-            messages: [],
-            errorCount: 0,
-            warningCount: 0,
-            fixableErrorCount: 0,
-            fixableWarningCount: 0
-        };
+        const eslintResult = eslintResults[0] || {};
 
         const messages: ESLintMessage[] = eslintResult.messages.map(
             msg => this.convertESLintMessage(msg)
         );
-
-        if (eslintResult.output) fs.writeFileSync(filePath, eslintResult.output);
 
         return {
             errorCount: eslintResult.errorCount,
@@ -112,7 +104,7 @@ export class LintUtil {
      */
     async prettierReport(filePath: string): Promise<PrettierReport> {
         try {
-            const content = fs.readFileSync(filePath, 'utf8');
+            const content = readFileSync(filePath, 'utf8');
             const fileInfo = await prettier.getFileInfo(filePath);
 
             if (fileInfo.ignored || !fileInfo.inferredParser) {
@@ -126,13 +118,10 @@ export class LintUtil {
             });
 
             const changes = formatted !== content;
-            if (changes) {
-                await fs.writeFile(filePath, formatted);
-            }
 
             return { formatted: true, changes, input: content, output: formatted };
         } catch (error) {
-            const content = fs.readFileSync(filePath, 'utf8');
+            const content = readFileSync(filePath, 'utf8');
             return { formatted: false, changes: false, input: content, output: content };
         }
     }
