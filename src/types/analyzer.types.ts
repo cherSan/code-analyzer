@@ -68,8 +68,30 @@ export interface MainTestReport {
     isValid: boolean;
 }
 
+export interface TestCoverageSummary {
+    lines: { total: number; covered: number; skipped: number; pct: number };
+    statements: { total: number; covered: number; skipped: number; pct: number };
+    functions: { total: number; covered: number; skipped: number; pct: number };
+    branches: { total: number; covered: number; skipped: number; pct: number };
+}
+
+export interface TestResultSummary {
+    status: 'passed' | 'failed' | 'skipped';
+    error: string | null;
+}
+
+export interface TestCoverageReport {
+    coverage?: Record<string, TestCoverageSummary>;
+    totalTests: number;
+    totalTestSuites: number;
+    testPassed: number;
+    testSkipped: number;
+    testFailed: number;
+    testSummary: Record<string, Record<string, TestResultSummary>>;
+}
+
 export interface UnitTestReport extends MainTestReport {
-    coverage: number;
+    report?: TestCoverageReport;
 }
 
 export interface TestReport {

@@ -41,7 +41,6 @@ export default async function AnalyzerDashboard() {
             </div>
         );
     }
-
     const ClientDashboard = () => {
         const handleCommit = (title: string, description: string) => {
             const fullMessage = description ? `${title}\n\n${description}` : title;
@@ -81,6 +80,7 @@ export default async function AnalyzerDashboard() {
                         <div className="files-grid">
                             {arrayOfReports.map((file, index) => {
                                 const fileReport = retrieveFileAnalyticData(report[file]);
+                                console.log(fileReport)
                                 return (
                                 <Link key={index} href={`/compare?file=${report[file]}`}>
                                     <Card>
@@ -113,7 +113,7 @@ export default async function AnalyzerDashboard() {
                                                             <div className="preview-item">
                                                                 <span className="preview-label">Unit Tests:</span>
                                                                 <span className={fileReport.test_report?.unit.isValid ? 'preview-ok' : fileReport.test_report?.unit?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.unit.isValid ? 'Valid' : fileReport.test_report?.unit?.path ? 'Wrong name' : 'Missing'}
+                                                                    {fileReport.test_report?.unit.isValid ? 'Exist' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
@@ -125,7 +125,7 @@ export default async function AnalyzerDashboard() {
                                                             <div className="preview-item">
                                                                 <span className="preview-label">E2E Tests:</span>
                                                                 <span className={fileReport.test_report?.e2e.isValid ? 'preview-ok' : fileReport.test_report?.e2e?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.e2e.isValid ? 'Valid' : fileReport.test_report?.e2e?.path ? 'Wrong name' : 'Missing'}
+                                                                    {fileReport.test_report?.e2e.isValid ? 'Exist' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
@@ -137,7 +137,7 @@ export default async function AnalyzerDashboard() {
                                                             <div className="preview-item">
                                                                 <span className="preview-label">Component Tests:</span>
                                                                 <span className={fileReport.test_report?.integration.isValid ? 'preview-ok' : fileReport.test_report?.integration?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.integration.isValid ? 'Valid' : fileReport.test_report?.integration?.path ? 'Wrong name' : 'Missing'}
+                                                                    {fileReport.test_report?.integration.isValid ? 'Exist' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
