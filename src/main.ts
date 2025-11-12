@@ -1,5 +1,4 @@
 import * as fs from 'fs-extra';
-import * as path from 'path';
 import chalk from 'chalk';
 import { GitUtil } from './utils/git.util';
 import { ReportUtil } from './utils/report.util';
@@ -20,73 +19,35 @@ export async function main(): Promise<void> {
     }
 
     const modifiedFiles = await gitUtil.getModifiedFiles();
-    console.log(chalk.blue('📝 Modified files:'), modifiedFiles.length);
-
-    if (modifiedFiles.length === 0) {
-        console.log(chalk.yellow('📝 No modified files found'));
-        return;
-    }
-
-    console.log(chalk.blue('\n🧪 Checking test files...'));
-    const testFileResults = await testFileUtil.checkTestFiles(modifiedFiles);
-    testFileUtil.printTestFileResults(testFileResults);
-
-    const targetDir = path.join(process.cwd(), '.code-analyzer');
-    await fs.remove(targetDir);
-    await fs.ensureDir(targetDir);
 
     const typescriptFiles = modifiedFiles.filter(file =>
         file.endsWith('.ts') || file.endsWith('.tsx')
     );
 
-    console.log(chalk.blue('📝 TypeScript files:'), typescriptFiles.length);
-
-    if (typescriptFiles.length === 0) {
-        console.log(chalk.yellow('📝 No TypeScript files found'));
-        return;
-    }
+    reportUtil.cleanUpMainReport(typescriptFiles);
 
     for (const filePath of typescriptFiles) {
-        if (!fs.pathExistsSync(filePath)) continue;
-
         console.log(chalk.gray(`\n🔍 Analyzing: ${filePath}`));
-
-        const testFileCheck = testFileResults.get(filePath)!;
-
-        const originalCopyName = reportUtil.generateUniqueFilename(filePath, 'original');
-        const lintingCopyName = reportUtil.generateUniqueFilename(filePath, 'linting');
-
-        const originalCopyPath = path.join(targetDir, originalCopyName);
-        const lintingCopyPath = path.join(targetDir, lintingCopyName);
         const originalContent = fs.readFileSync(filePath, 'utf8');
+        const testReport = testFileUtil.checkTestFile(filePath);
         const eslintReport = await lintUtil.eslintReport(filePath);
         const prettierReport = await lintUtil.prettierReport(filePath);
-        fs.writeFileSync(lintingCopyPath, prettierReport.output || originalContent);
-        fs.writeFileSync(originalCopyPath, originalContent);
-        fs.writeFileSync(filePath, originalContent);
-        reportUtil.addFileAnalysis({
-            originalPath: filePath,
-            originalCopyPath: originalCopyPath,
-            lintingCopyPath: lintingCopyPath,
-            eslintReport,
-            prettierReport,
-            gitStatus: { status: 'modified', staged: false },
-            tests: testFileCheck
-        });
+
+        reportUtil.saveFileReport(
+            filePath,
+            {
+                original_file_path: filePath,
+                original_file_content: originalContent,
+                linted_file_content: prettierReport.output,
+                eslint_report: eslintReport,
+                prettier_report: prettierReport,
+                test_report: testReport,
+                git_status: { status: 'modified', staged: false }
+            }
+        )
 
         console.log(chalk.green(`✓ Analyzed: ${filePath}`));
-        console.log(chalk.gray(`  ESLint: ${eslintReport.errorCount} errors, ${eslintReport.warningCount} warnings`));
-        console.log(chalk.gray(`  Prettier: ${prettierReport.changes ? 'formatted' : 'no changes'}`));
     }
 
-    await reportUtil.saveReport();
-
-    const report = reportUtil.getReport();
-    console.log(chalk.blue('\n📊 Analysis Summary:'));
-    console.log(chalk.blue(`   Files: ${report.totalFiles}`));
-    console.log(chalk.red(`   ESLint Errors: ${report.summary.eslint.totalErrors}`));
-    console.log(chalk.yellow(`   ESLint Warnings: ${report.summary.eslint.totalWarnings}`));
-    console.log(chalk.green(`   Prettier Formatted: ${report.summary.prettier.formattedFiles}`));
-    console.log(chalk.blue(`   Test Files: ${report.summary.tests.hasTestFiles} valid, ${report.summary.tests.invalidTestFiles} invalid names, ${report.summary.tests.missingTestFiles} missing`));
-    console.log(chalk.blue('\n🌐 Starting analysis server...'));
+    reportUtil.saveSummary({});
 }

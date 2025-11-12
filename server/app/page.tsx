@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from "next/link";
-import {retrieveAnalyticData} from "@/lib/analyzer-report";
+import {retrieveAnalyticData, retrieveFileAnalyticData, retrieveSummary} from "@/lib/analyzer-report";
 import {Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 
 function CommitForm() {
@@ -28,7 +28,9 @@ function CommitForm() {
 }
 
 export default async function AnalyzerDashboard() {
-    const report = await retrieveAnalyticData();
+    const report = retrieveAnalyticData();
+    const summary = retrieveSummary();
+    const arrayOfReports = Object.keys(report);
     if (!report) {
         return (
             <div className="container">
@@ -56,36 +58,38 @@ export default async function AnalyzerDashboard() {
 
                 <div className="stats">
                     <div className="stat-card error">
-                        <div className="stat-number error">{report.summary.eslint.totalErrors}</div>
+                        <div className="stat-number error">{summary.eslint?.total_errors || 'N/A'}</div>
                         <div>ESLint Errors</div>
                     </div>
                     <div className="stat-card warning">
-                        <div className="stat-number warning">{report.summary.eslint.totalWarnings}</div>
+                        <div className="stat-number warning">{summary.eslint?.total_warnings || 'N/A'}</div>
                         <div>ESLint Warnings</div>
                     </div>
                     <div className="stat-card success">
-                        <div className="stat-number success">{report.summary.prettier.formattedFiles}</div>
+                        <div className="stat-number success">{summary.prettier?.formatted_files || 'N/A'}</div>
                         <div>Prettier Formatted</div>
                     </div>
                     <div className="stat-card info">
-                        <div className="stat-number info">{report.summary.tests.hasTestFiles}</div>
+                        <div className="stat-number info">{summary.test?.tested_files || 'N/A'}</div>
                         <div>Valid Tests</div>
                     </div>
                 </div>
 
                 <div className="dashboard-content">
                     <div className="files-section">
-                        <h2>Analyzed Files ({report.files.length})</h2>
+                        <h2>Analyzed Files ({report.files?.length})</h2>
                         <div className="files-grid">
-                            {report.files.map((file, index) => (
-                                <Link key={index} href={`/compare?file=${index}`}>
+                            {arrayOfReports.map((file, index) => {
+                                const fileReport = retrieveFileAnalyticData(report[file]);
+                                return (
+                                <Link key={index} href={`/compare?file=${report[file]}`}>
                                     <Card>
                                         <CardHeader>
-                                            <CardTitle className="file-path">{file.originalPath}</CardTitle>
+                                            <CardTitle className="file-path">{file}</CardTitle>
                                             <CardDescription>
                                                 <div className="file-stats">
-                                                    <span className="error-count">{file.eslintReport.errorCount} errors</span>
-                                                    <span className="warning-count">{file.eslintReport.warningCount} warnings</span>
+                                                    <span className="error-count">{fileReport.eslint_report?.errorCount || 'N/A'} errors</span>
+                                                    <span className="warning-count">{fileReport.eslint_report?.warningCount || 'N/A'} warnings</span>
                                                 </div>
                                             </CardDescription>
                                         </CardHeader>
@@ -93,47 +97,47 @@ export default async function AnalyzerDashboard() {
                                             <div className="file-preview">
                                                 <div className="preview-item">
                                                     <span className="preview-label">ESLint:</span>
-                                                    <span className={file.eslintReport.errorCount > 0 ? 'preview-error' : 'preview-ok'}>
-                                                    {file.eslintReport.errorCount} errors, {file.eslintReport.warningCount} warnings
+                                                    <span className={fileReport.eslint_report?.errorCount && fileReport.eslint_report.errorCount > 0 ? 'preview-error' : 'preview-ok'}>
+                                                    {fileReport.eslint_report?.errorCount || 'N/A'} errors, {fileReport.eslint_report?.warningCount || 'N/A'} warnings
                                                 </span>
                                                 </div>
                                                 <div className="preview-item">
                                                     <span className="preview-label">Prettier:</span>
-                                                        <span className={file.prettierReport.changes ? 'preview-changed' : 'preview-ok'}>
-                                                        {file.prettierReport.changes ? 'Formatted' : 'No changes'}
+                                                        <span className={fileReport.prettier_report?.changes ? 'preview-changed' : 'preview-ok'}>
+                                                        {fileReport.prettier_report?.changes ? 'Formatted' : 'No changes'}
                                                     </span>
                                                 </div>
                                                 {
-                                                    file.tests.unit
+                                                    fileReport.test_report?.unit
                                                         ? (
                                                             <div className="preview-item">
                                                                 <span className="preview-label">Unit Tests:</span>
-                                                                <span className={file.tests.unit?.isValid ? 'preview-ok' : file.tests.unit?.hasTestFile ? 'preview-warning' : 'preview-error'}>
-                                                                    {file.tests.unit?.isValid ? 'Valid' : file.tests.unit?.hasTestFile ? 'Wrong name' : 'Missing'}
+                                                                <span className={fileReport.test_report?.unit.isValid ? 'preview-ok' : fileReport.test_report?.unit?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.unit.isValid ? 'Valid' : fileReport.test_report?.unit?.path ? 'Wrong name' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
                                                         : null
                                                 }
                                                 {
-                                                    file.tests.integration
+                                                    fileReport.test_report?.e2e
                                                         ? (
                                                             <div className="preview-item">
-                                                                <span className="preview-label">Integration Tests:</span>
-                                                                <span className={file.tests.integration?.isValid ? 'preview-ok' : file.tests.integration?.hasTestFile ? 'preview-warning' : 'preview-error'}>
-                                                                    {file.tests.integration?.isValid ? 'Valid' : file.tests.integration?.hasTestFile ? 'Wrong name' : 'Missing'}
+                                                                <span className="preview-label">E2E Tests:</span>
+                                                                <span className={fileReport.test_report?.e2e.isValid ? 'preview-ok' : fileReport.test_report?.e2e?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.e2e.isValid ? 'Valid' : fileReport.test_report?.e2e?.path ? 'Wrong name' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
                                                         : null
                                                 }
                                                 {
-                                                    file.tests.e2e
+                                                    fileReport.test_report?.integration
                                                         ? (
                                                             <div className="preview-item">
-                                                                <span className="preview-label">Integration Tests:</span>
-                                                                <span className={file.tests.e2e?.isValid ? 'preview-ok' : file.tests.e2e?.hasTestFile ? 'preview-warning' : 'preview-error'}>
-                                                                    {file.tests.e2e?.isValid ? 'Valid' : file.tests.e2e?.hasTestFile ? 'Wrong name' : 'Missing'}
+                                                                <span className="preview-label">Component Tests:</span>
+                                                                <span className={fileReport.test_report?.integration.isValid ? 'preview-ok' : fileReport.test_report?.integration?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.integration.isValid ? 'Valid' : fileReport.test_report?.integration?.path ? 'Wrong name' : 'Missing'}
                                                                 </span>
                                                             </div>
                                                         )
@@ -143,7 +147,7 @@ export default async function AnalyzerDashboard() {
                                         </CardContent>
                                     </Card>
                                 </Link>
-                            ))}
+                            )})}
                         </div>
                     </div>
                     <Card>

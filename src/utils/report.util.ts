@@ -1,83 +1,70 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { AnalysisReport, FileAnalysis } from '../types/analyzer.types';
-import chalk from 'chalk';
+import {ensureDirSync, pathExistsSync, readJSONSync, writeJSONSync} from "fs-extra";
+import { join, dirname } from "path";
+import { FileReport, MainReport, SummaryReport } from '../types/analyzer.types';
 
 export class ReportUtil {
-    private readonly report: AnalysisReport;
+    private readonly reportDir: string;
     private readonly reportPath: string;
+    private readonly summaryPath: string;
 
     constructor() {
-        this.reportPath = path.join(process.cwd(), '.code-analyzer', 'report.json');
-        this.report = {
-            timestamp: new Date().toISOString(),
-            totalFiles: 0,
-            totalErrors: 0,
-            totalWarnings: 0,
-            files: [],
-            summary: {
-                eslint: { totalErrors: 0, totalWarnings: 0, fixableErrors: 0, fixableWarnings: 0 },
-                prettier: { formattedFiles: 0, totalFiles: 0 },
-                tests: { totalFiles: 0, hasTestFiles: 0, missingTestFiles: 0, invalidTestFiles: 0 }
-            }
-        };
+        this.reportDir = join(process.cwd(), '.code-analyzer');
+        this.reportPath = join(this.reportDir, 'report.json');
+        this.summaryPath = join(this.reportDir, 'summary.json');
     }
 
-    /**
-     * Generate simple UUID filename
-     */
-    generateUniqueFilename(originalPath: string, suffix: string): string {
-        const ext = path.extname(originalPath);
+    private generateUniquePath(): string {
         const uniqueId = uuidv4();
-        return `${suffix}_${uniqueId}${ext}`;
+        return join(this.reportDir, `${uniqueId}.json`);
     }
 
-    /**
-     * Add file analysis to report
-     */
-    addFileAnalysis(analysis: Omit<FileAnalysis, 'originalContent' | 'lintingContent'>): void {
-        this.report.files.push(analysis as FileAnalysis);
-        this.report.totalFiles++;
+    private saveMainReport(report: MainReport = {}) {
+        ensureDirSync(dirname(this.reportPath));
+        writeJSONSync(this.reportPath, report, { spaces: 2 });
+    }
 
-        // Update ESLint summary
-        this.report.summary.eslint.totalErrors += analysis.eslintReport.errorCount;
-        this.report.summary.eslint.totalWarnings += analysis.eslintReport.warningCount;
-        this.report.summary.eslint.fixableErrors += analysis.eslintReport.fixableErrorCount;
-        this.report.summary.eslint.fixableWarnings += analysis.eslintReport.fixableWarningCount;
+    private getMainReport(): MainReport {
+        const isExist = pathExistsSync(this.reportPath);
+        if (!isExist) this.saveMainReport({});
+        return readJSONSync(this.reportPath);
+    }
 
-        // Update Prettier summary
-        if (analysis.prettierReport.formatted) {
-            this.report.summary.prettier.formattedFiles++;
+    cleanUpMainReport(changedFiles: string[]): void {
+        const mainReport = this.getMainReport();
+        const newReport: MainReport = {};
+        changedFiles.forEach(file => {
+            if (!mainReport[file]) {
+                const filePath = this.generateUniquePath();
+                newReport[file] = filePath;
+                writeJSONSync(filePath, {});
+            } else {
+                newReport[file] = mainReport[file];
+            }
+        });
+        if (JSON.stringify(newReport) !== JSON.stringify(mainReport)) this.saveMainReport(newReport);
+    }
+
+    saveFileReport(originalFile: string, report: FileReport) {
+        const mainReport = this.getMainReport();
+        if (!mainReport[originalFile] || !pathExistsSync(mainReport[originalFile])) {
+            const filePath = this.generateUniquePath();
+            mainReport[originalFile] = filePath;
+            this.saveMainReport(mainReport);
+            writeJSONSync(filePath, report);
+        } else {
+            const oldReport = readJSONSync(mainReport[originalFile]);
+            if (JSON.stringify(oldReport) !== JSON.stringify(report)) writeJSONSync(mainReport[originalFile], report);
         }
-        this.report.summary.prettier.totalFiles++;
-
-        // Update Test summary
-        this.report.summary.tests.totalFiles++;
-
-        if (analysis.tests.unit?.isValid) this.report.summary.tests.hasTestFiles++;
-        else this.report.summary.tests.missingTestFiles++;
-
-        if (analysis.tests.e2e?.isValid) this.report.summary.tests.hasTestFiles++;
-        else this.report.summary.tests.missingTestFiles++;
-
-        if (analysis.tests.integration?.isValid) this.report.summary.tests.hasTestFiles++;
-        else this.report.summary.tests.missingTestFiles++;
     }
 
-    /**
-     * Save report to file
-     */
-    async saveReport(): Promise<void> {
-        await fs.ensureDir(path.dirname(this.reportPath));
-        await fs.writeJson(this.reportPath, this.report, { spaces: 2 });
-        console.log(chalk.green(`📊 Analysis report saved to: ${this.reportPath}`));
-    }
-
-    /**
-     * Get report data
-     */
-    getReport(): AnalysisReport {
-        return this.report;
+    saveSummary(report: SummaryReport) {
+        const exist = pathExistsSync(this.summaryPath);
+        if (!exist) {
+            writeJSONSync(this.summaryPath, report);
+        } else {
+            const oldReport = readJSONSync(this.summaryPath);
+            if (JSON.stringify(oldReport) !== JSON.stringify(report)) writeJSONSync(this.summaryPath, report);
+        }
     }
 }

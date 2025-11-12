@@ -1,42 +1,25 @@
-import {AnalysisReport, FileAnalysis} from "@/types/analyzer.types";
-import {pathExists, readJson} from "fs-extra";
-import {readFileSync} from "fs";
+import {pathExistsSync, readJSONSync} from "fs-extra";
+import {join} from 'path';
+import {FileReport, MainReport, SummaryReport} from "@/types/analyzer.types";
 
-export const retrieveAnalyticData: () => Promise<AnalysisReport | null> = async () => {
-    console.log('Loading analysis report...', process.env.REPORT_PATH);
-    try {
-        const reportPath = process.env.REPORT_PATH;
-
-        if (!reportPath) {
-            console.log('REPORT_PATH environment variable not set');
-            return null;
-        }
-        if (await pathExists(reportPath)) {
-            const reportData = await readJson(reportPath);
-            console.log('Report loaded successfully');
-            return reportData as AnalysisReport;
-        }
-
-        console.log('Report file not found at specified path');
-        return null;
-    } catch (error) {
-        console.error('Error loading analysis:', error);
-        return null;
-    }
+export const retrieveAnalyticData: () => MainReport = () => {
+    if (!process.env.REPORT_PATH) return {};
+    const reportPath = join(process.env.REPORT_PATH, 'report.json');
+    const isExist = pathExistsSync(reportPath);
+    if (!isExist) return {};
+    return readJSONSync(reportPath) || {};
 };
 
-export const retrieveFileAnalyticData: (id: number) => Promise<FileAnalysis | null> = async (id?: number) => {
-    if (typeof id !== 'number' || isNaN(id)) return null;
-    const data = await retrieveAnalyticData();
-    if (data && data.files[id])  return data.files[id] || null;
-    return null;
+export const retrieveFileAnalyticData: (path: string) => FileReport = (path: string) => {
+    const isExist = pathExistsSync(path);
+    if (!isExist) return {};
+    return readJSONSync(path) || {};
 }
 
-export const getFileContent: (fileName?: string) => string | null = (fileName?: string) => {
-    if (!fileName) return null;
-    try {
-        return readFileSync(fileName, 'utf-8');
-    } catch (error) {
-        return null;
-    }
+export const retrieveSummary: () => SummaryReport = () => {
+    if (!process.env.REPORT_PATH) return {};
+    const reportPath = join(process.env.REPORT_PATH, 'summary.json');
+    const isExist = pathExistsSync(reportPath);
+    if (!isExist) return {};
+    return readJSONSync(reportPath) || {};
 }

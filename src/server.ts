@@ -5,7 +5,7 @@ import chalk from 'chalk';
 export async function startAnalysisServer(): Promise<ChildProcess> {
     return new Promise((resolve) => {
         const serverPath = path.join(__dirname, '..', 'server');
-        const reportPath = path.join(process.cwd(), '.code-analyzer', 'report.json');
+        const reportPath = path.join(process.cwd(), '.code-analyzer');
 
         console.log(chalk.blue('🚀 Starting Next.js server on http://localhost:3001'));
         console.log(chalk.green(`📊 Report path: ${reportPath}`));

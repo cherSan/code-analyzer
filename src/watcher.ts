@@ -1,7 +1,6 @@
 import chokidar from 'chokidar';
 import type { ChildProcess } from 'child_process';
 import { main } from './main';
-import chalk from "chalk";
 
 export async function startWatcher(serverProcess: ChildProcess) {
     let isRunning = false;

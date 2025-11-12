@@ -1,7 +1,7 @@
 import {retrieveAnalyticData} from "@/lib/analyzer-report";
 
 const LintErrors = async () => {
-    const data = await retrieveAnalyticData();
+    const data = retrieveAnalyticData();
 
     return (
         <div>

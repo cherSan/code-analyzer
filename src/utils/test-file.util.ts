@@ -1,13 +1,13 @@
 import * as path from 'path';
 import chalk from 'chalk';
 import {pathExistsSync} from "fs-extra";
-import {TestTypes} from "../types/analyzer.types";
+import {TestReport} from "../types/analyzer.types";
 
 export class TestFileUtil {
     /**
      * Check if file has corresponding test file
      */
-    async checkTestFile(filePath: string): Promise<TestTypes> {
+    checkTestFile(filePath: string): TestReport {
         const dir = path.dirname(filePath);
         const filename = path.basename(filePath, path.extname(filePath));
         const ext = path.extname(filePath);
@@ -23,19 +23,17 @@ export class TestFileUtil {
             const unitTestPath = path.join(dir, `${baseName}.test.tsx`);
             return {
                 integration: {
-                    hasTestFile: pathExistsSync(integrationTestPath),
                     path: integrationTestPath,
                     isValid: pathExistsSync(integrationTestPath),
                 },
                 e2e: {
-                    hasTestFile: pathExistsSync(e2eTestPath),
                     path: e2eTestPath,
                     isValid: pathExistsSync(e2eTestPath),
                 },
                 unit: {
-                    hasTestFile: pathExistsSync(unitTestPath),
                     path: unitTestPath,
                     isValid: pathExistsSync(unitTestPath),
+                    coverage: 0,
                 }
             }
         } else if (
@@ -48,9 +46,9 @@ export class TestFileUtil {
                 integration: undefined,
                 e2e: undefined,
                 unit: {
-                    hasTestFile: pathExistsSync(unitTestPath),
                     path: unitTestPath,
                     isValid: pathExistsSync(unitTestPath),
+                    coverage: 0,
                 }
             }
         } else if (
@@ -60,9 +58,9 @@ export class TestFileUtil {
             const unitTestPath = path.join(dir, `${filename}.test.${ext}`);
             return {
                 unit: {
-                    hasTestFile: pathExistsSync(unitTestPath),
                     path: unitTestPath,
                     isValid: pathExistsSync(unitTestPath),
+                    coverage: 0,
                 },
                 e2e: undefined,
                 integration: undefined,
@@ -79,8 +77,8 @@ export class TestFileUtil {
     /**
      * Check test files for multiple files
      */
-    async checkTestFiles(filePaths: string[]): Promise<Map<string, TestTypes>> {
-        const results = new Map<string, TestTypes>();
+    async checkTestFiles(filePaths: string[]): Promise<Map<string, TestReport>> {
+        const results = new Map<string, TestReport>();
 
         for (const filePath of filePaths) {
             const check = await this.checkTestFile(filePath);
@@ -93,7 +91,7 @@ export class TestFileUtil {
     /**
      * Print test file check results
      */
-    printTestFileResults(results: Map<string, TestTypes>): void {
+    printTestFileResults(results: Map<string, TestReport>): void {
         let missingTests = 0;
         let invalidTests = 0;
         let validTests = 0;

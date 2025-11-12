@@ -1,39 +1,39 @@
 import React from 'react';
 import MonacoDiff from "@/components/monaco-diff.component";
-import {getFileContent, retrieveFileAnalyticData} from "@/lib/analyzer-report";
-import {FileAnalysis} from "@/types/analyzer.types";
+import {retrieveFileAnalyticData} from "@/lib/analyzer-report";
+import {FileReport} from "@/types/analyzer.types";
 
 function FileComparison({
-    originalContent,
-    lintingContent,
-    originalPath,
-    eslintReport,
-    prettierReport
-}: FileAnalysis & { originalContent: string; lintingContent: string }) {
+    original_file_content,
+    linted_file_content,
+    original_file_path,
+    eslint_report,
+    prettier_report,
+}: FileReport) {
     return (
         <div className="comparison-container">
             <div className="comparison-header">
-                <h1>🔍 File Comparison: {originalPath}</h1>
+                <h1>🔍 File Comparison: {original_file_path}</h1>
                 <div className="file-stats">
                     <div className="stat">
                         <span className="stat-label">ESLint:</span>
-                        <span className={`stat-value ${eslintReport.errorCount > 0 ? 'error' : 'success'}`}>
-                            {eslintReport.errorCount} errors, {eslintReport.warningCount} warnings
+                        <span className={`stat-value ${eslint_report?.errorCount && eslint_report?.errorCount > 0 ? 'error' : 'success'}`}>
+                            {eslint_report?.errorCount} errors, {eslint_report?.warningCount} warnings
                         </span>
                     </div>
                     <div className="stat">
                         <span className="stat-label">Prettier:</span>
-                        <span className={`stat-value ${prettierReport.changes ? 'changed' : 'unchanged'}`}>
-                            {prettierReport.changes ? 'Formatted' : 'No changes'}
+                        <span className={`stat-value ${prettier_report?.changes ? 'changed' : 'unchanged'}`}>
+                            {prettier_report?.changes ? 'Formatted' : 'No changes'}
                         </span>
                     </div>
                 </div>
             </div>
 
             <MonacoDiff
-                originalContent={originalContent}
-                lintedContent={lintingContent}
-                fileName={originalPath}
+                originalContent={original_file_content || ''}
+                lintedContent={linted_file_content || ''}
+                fileName={original_file_path || ''}
             />
 
             <div className="changes-summary">
@@ -41,22 +41,22 @@ function FileComparison({
                 <div className="changes-grid">
                     <div className="change-item">
                         <span className="change-label">Original:</span>
-                        <span className="change-value">{originalContent.length} characters</span>
+                        <span className="change-value">{original_file_content?.length} characters</span>
                     </div>
                     <div className="change-item">
                         <span className="change-label">Linted:</span>
-                        <span className="change-value">{lintingContent.length} characters</span>
+                        <span className="change-value">{linted_file_content?.length} characters</span>
                     </div>
                     <div className="change-item">
                         <span className="change-label">ESLint:</span>
-                        <span className={`change-value ${eslintReport.fixed ? 'changed' : 'unchanged'}`}>
-                            {eslintReport.fixed ? 'Yes' : 'No'}
+                        <span className={`change-value ${eslint_report?.fixed ? 'changed' : 'unchanged'}`}>
+                            {eslint_report?.fixed ? 'Yes' : 'No'}
                         </span>
                     </div>
                     <div className="change-item">
                         <span className="change-label">Prettier:</span>
-                        <span className={`change-value ${prettierReport.changes ? 'changed' : 'unchanged'}`}>
-                            {prettierReport.changes ? 'Yes' : 'No'}
+                        <span className={`change-value ${prettier_report?.changes ? 'changed' : 'unchanged'}`}>
+                            {prettier_report?.changes ? 'Yes' : 'No'}
                         </span>
                     </div>
                 </div>
@@ -65,11 +65,11 @@ function FileComparison({
             <div className="changes-summary">
                 <h3 className="error">Errors</h3>
                 {
-                    eslintReport?.messages?.length === 0
+                    eslint_report?.messages?.length === 0
                         ? <p>No ESLint errors found.</p>
                         : (
                             <ul className="error-list">
-                                {eslintReport.messages.map((msg, index) => (
+                                {eslint_report?.messages.map((msg, index) => (
                                     <li key={index} className="error-item">
                                         <span className="error-location">Line {msg.line}, Col {msg.column}:</span>
                                         <span className="error-message">{msg.message} {msg.ruleId && `(Rule: ${msg.ruleId})`}</span>
@@ -89,28 +89,20 @@ interface ComparePageProps {
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
     const params = await searchParams;
-    const fileIndex = params.file ? parseInt(params.file) : -1;
-    const data = await retrieveFileAnalyticData(fileIndex);
-    const originalContent = getFileContent(data?.originalPath);
-    const lintingContent = getFileContent(data?.lintingCopyPath);
+    if (!params.file) return null;
+    const data = retrieveFileAnalyticData(params.file);
 
-    if (!data || !originalContent || !lintingContent) {
+    if (!data) {
         return (
             <div className="container">
                 <div className="header">
                     <h1>🔍 File Comparison</h1>
-                    <p>Failed to load comparison data for file index {fileIndex}.</p>
+                    <p>Failed to load comparison data for {params.file}.</p>
                 </div>
             </div>
         );
     }
 
 
-    return (
-        <FileComparison
-            {...data}
-            originalContent={originalContent}
-            lintingContent={lintingContent}
-        />
-    );
+    return  <FileComparison {...data} />;
 }

@@ -1,14 +1,3 @@
-export interface FileAnalysis {
-    originalPath: string;
-    originalCopyPath: string;
-    lintingCopyPath: string;
-    originalContent: string;
-    lintingContent: string;
-    eslintReport: ESLintReport;
-    prettierReport: PrettierReport;
-    gitStatus: GitFileStatus;
-}
-
 export interface ESLintReport {
     errorCount: number;
     warningCount: number;
@@ -56,51 +45,55 @@ export interface GitFileStatus {
     staged: boolean;
 }
 
-export interface TestTypes {
-    unit?: TestFileCheck;
-    integration?: TestFileCheck;
-    e2e?: TestFileCheck;
+export interface ESLintSummary {
+    total_errors: number;
+    total_warnings: number;
+    fixable_errors: number;
+    fixable_warnings: number;
 }
 
-export interface TestFileCheck {
-    hasTestFile: boolean;
+export interface PrettierSummary {
+    formatted_files: number;
+}
+
+export interface TestSummary {
+    tested_files: number;
+    missed_tested_files: number;
+    invalid_tested_files: number;
+    code_coverage: number;
+}
+
+export interface MainTestReport {
     path: string;
     isValid: boolean;
-    error?: string;
 }
 
-export interface FileAnalysis {
-    originalPath: string;
-    originalCopyPath: string;
-    lintingCopyPath: string;
-    eslintReport: ESLintReport;
-    prettierReport: PrettierReport;
-    gitStatus: GitFileStatus;
-    tests: TestTypes;
+export interface UnitTestReport extends MainTestReport {
+    coverage: number;
 }
 
-export interface AnalysisReport {
-    timestamp: string;
-    totalFiles: number;
-    totalErrors: number;
-    totalWarnings: number;
-    files: FileAnalysis[];
-    summary: {
-        eslint: {
-            totalErrors: number;
-            totalWarnings: number;
-            fixableErrors: number;
-            fixableWarnings: number;
-        };
-        prettier: {
-            formattedFiles: number;
-            totalFiles: number;
-        };
-        tests: {
-            totalFiles: number;
-            hasTestFiles: number;
-            missingTestFiles: number;
-            invalidTestFiles: number;
-        };
-    };
+export interface TestReport {
+    unit?: UnitTestReport;
+    integration?: MainTestReport;
+    e2e?: MainTestReport;
+}
+
+export type MainReport = Record<string, string>;
+
+export interface SummaryReport {
+    eslint?: ESLintSummary;
+    prettier?: PrettierSummary;
+    test?: TestSummary;
+    original_total_code_lines?: number;
+    linted_total_code_lines?: number;
+}
+
+export interface FileReport {
+    original_file_path?: string;
+    original_file_content?: string;
+    linted_file_content?: string;
+    eslint_report?: ESLintReport;
+    prettier_report?: PrettierReport;
+    test_report?: TestReport;
+    git_status?: GitFileStatus;
 }
