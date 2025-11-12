@@ -5,7 +5,6 @@ import { GitUtil } from './utils/git.util';
 import { ReportUtil } from './utils/report.util';
 import { LintUtil } from './utils/lint.util';
 import { TestFileUtil } from './utils/test-file.util';
-import { startAnalysisServer } from './server';
 
 export async function main(): Promise<void> {
     console.log(chalk.blue('🚀 Code Analyzer started!'));
@@ -90,5 +89,4 @@ export async function main(): Promise<void> {
     console.log(chalk.green(`   Prettier Formatted: ${report.summary.prettier.formattedFiles}`));
     console.log(chalk.blue(`   Test Files: ${report.summary.tests.hasTestFiles} valid, ${report.summary.tests.invalidTestFiles} invalid names, ${report.summary.tests.missingTestFiles} missing`));
     console.log(chalk.blue('\n🌐 Starting analysis server...'));
-    await startAnalysisServer();
 }

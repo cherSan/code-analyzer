@@ -1,8 +1,8 @@
-import { exec } from 'child_process';
+import { exec, ChildProcess } from 'child_process';
 import * as path from 'path';
 import chalk from 'chalk';
 
-export async function startAnalysisServer(): Promise<void> {
+export async function startAnalysisServer(): Promise<ChildProcess> {
     return new Promise((resolve) => {
         const serverPath = path.join(__dirname, '..', 'server');
         const reportPath = path.join(process.cwd(), '.code-analyzer', 'report.json');
@@ -37,7 +37,8 @@ export async function startAnalysisServer(): Promise<void> {
 
         server.on('close', (code) => {
             console.log(chalk.blue(`Server process exited with code ${code}`));
-            resolve();
         });
+
+        resolve(server);
     });
 }
