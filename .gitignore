@@ -26,3 +26,4 @@ yarn-error.log*
 # Example project (complete folder)
 /example/
 /server/.next/
+/example/coverage/
