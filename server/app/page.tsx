@@ -4,7 +4,7 @@ import {retrieveAnalyticData, retrieveFileAnalyticData, retrieveSummary} from "@
 import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {Header, Text} from "@/components/ui/typography";
 import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
-import {BadgeCheckIcon, ChevronRightIcon, GitCompareArrows} from "lucide-react";
+import {BadgeCheckIcon, ChevronRightIcon, GitCompareArrows, MessageCircleWarning, TestTubeDiagonal} from "lucide-react";
 
 function CommitForm() {
     return (
@@ -150,74 +150,134 @@ export default async function AnalyzerDashboard() {
                                                 }
                                             </CardDescription>
                                             <CardAction className="flex gap-2 flex-col">
-                                                <Item variant="outline" size="sm" asChild>
-                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
-                                                            <GitCompareArrows className="size-5" />
-                                                            <ItemTitle>Compare Changes</ItemTitle>
-                                                            <ChevronRightIcon className="size-4" />
-                                                    </Link>
-                                                </Item>
-                                                <Item variant="outline" size="sm" asChild>
-                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
-                                                        <GitCompareArrows className="size-5" />
-                                                        <ItemTitle>Compare Changes</ItemTitle>
-                                                        <ChevronRightIcon className="size-4" />
-                                                    </Link>
-                                                </Item>
-                                                <Item variant="outline" size="sm" asChild>
-                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
-                                                        <GitCompareArrows className="size-5" />
-                                                        <ItemTitle>Compare Changes</ItemTitle>
-                                                        <ChevronRightIcon className="size-4" />
-                                                    </Link>
-                                                </Item>
+                                                {
+                                                    fileReport.original_file_content !== fileReport.linted_file_content
+                                                        ? (
+                                                            <Item variant="outline" size="sm" asChild>
+                                                                <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                                    <GitCompareArrows className="size-5" />
+                                                                    <ItemTitle>Compare Changes</ItemTitle>
+                                                                    <ChevronRightIcon className="size-4" />
+                                                                </Link>
+                                                            </Item>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.unit?.report
+                                                        ? (
+                                                            <Item variant="outline" size="sm" asChild>
+                                                                <Link key={index} href={`/unit-test?file=${report[file]}`}>
+                                                                    <TestTubeDiagonal className="size-5" />
+                                                                    <ItemTitle>Test Report</ItemTitle>
+                                                                    <ChevronRightIcon className="size-4" />
+                                                                </Link>
+                                                            </Item>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.eslint_report?.errorCount
+                                                        ? (
+                                                            <Item variant="outline" size="sm" asChild>
+                                                                <Link key={index} href={`/lint-errors?file=${report[file]}`}>
+                                                                    <MessageCircleWarning className="size-5" />
+                                                                    <ItemTitle>ESLint Report</ItemTitle>
+                                                                    <ChevronRightIcon className="size-4" />
+                                                                </Link>
+                                                            </Item>
+                                                        )
+                                                        : null
+                                                }
                                             </CardAction>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="file-preview">
-                                                <div className="preview-item">
-                                                    <span className="preview-label">ESLint:</span>
-                                                    <span className={fileReport.eslint_report?.errorCount && fileReport.eslint_report.errorCount > 0 ? 'preview-error' : 'preview-ok'}>
-                                                    {fileReport.eslint_report?.errorCount || 'N/A'} errors, {fileReport.eslint_report?.warningCount || 'N/A'} warnings
-                                                </span>
-                                                </div>
-                                                <div className="preview-item">
-                                                    <span className="preview-label">Prettier:</span>
-                                                        <span className={fileReport.prettier_report?.changes ? 'preview-changed' : 'preview-ok'}>
-                                                        {fileReport.prettier_report?.changes ? 'Formatted' : 'No changes'}
-                                                    </span>
-                                                </div>
-
+                                                {
+                                                    fileReport.eslint_report
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">ESLint Errors:</span>
+                                                                <Text variant="error">{fileReport.eslint_report?.errorCount}</Text>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.eslint_report
+                                                    ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">ESLint Warnings:</span>
+                                                                <Text variant="warning">{fileReport.eslint_report?.warningCount}</Text>
+                                                            </div>
+                                                    )
+                                                    : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.unit?.report
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Total Tests</span>
+                                                                <Text variant="info">{fileReport.test_report?.unit?.report?.totalTests}</Text>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.unit?.report
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Passed Tests</span>
+                                                                <Text variant="success">{fileReport.test_report?.unit?.report?.testPassed}</Text>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.unit?.report
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Skipped Tests</span>
+                                                                <Text variant="warning">{fileReport.test_report?.unit?.report?.testSkipped}</Text>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.unit?.report
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Failed Tests</span>
+                                                                <Text variant="error">{fileReport.test_report?.unit?.report?.testFailed}</Text>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.original_file_path && fileReport.test_report?.unit?.report?.coverage
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Tests Coverage</span>
+                                                                <div className="flex flex-col items-end">
+                                                                    <Text variant="info">
+                                                                        Lines: {fileReport.test_report?.unit?.report?.coverage[fileReport.original_file_path]?.lines?.pct.toFixed(2) || 0}%
+                                                                    </Text>
+                                                                    <Text variant="info">
+                                                                        Branches: {fileReport.test_report?.unit?.report?.coverage[fileReport.original_file_path]?.branches?.pct.toFixed(2) || 0}%
+                                                                    </Text>
+                                                                    <Text variant="info">
+                                                                        Functions: {fileReport.test_report?.unit?.report?.coverage[fileReport.original_file_path]?.functions?.pct.toFixed(2) || 0}%
+                                                                    </Text>
+                                                                    <Text variant="info">
+                                                                        Statements: {fileReport.test_report?.unit?.report?.coverage[fileReport.original_file_path]?.statements?.pct.toFixed(2) || 0}%
+                                                                    </Text>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
                                             </div>
                                         </CardContent>
-                                        <CardFooter>
-                                            <Item variant="outline" size="sm" asChild>
-                                                <Link key={index} href={`/compare?file=${report[file]}`}>
-                                                    <ItemMedia>
-                                                        <BadgeCheckIcon className="size-5" />
-                                                    </ItemMedia>
-                                                    <ItemContent>
-                                                        <ItemTitle>Your profile has been verified.</ItemTitle>
-                                                    </ItemContent>
-                                                    <ItemActions>
-                                                        <ChevronRightIcon className="size-4" />
-                                                    </ItemActions>
-                                                </Link>
-                                            </Item>
-                                            <Item variant="outline" size="sm" asChild>
-                                                <Link key={index} href={`/compare?file=${report[file]}`}>
-                                                    <ItemMedia>
-                                                        <BadgeCheckIcon className="size-5" />
-                                                    </ItemMedia>
-                                                    <ItemContent>
-                                                        <ItemTitle>Your profile has been verified.</ItemTitle>
-                                                    </ItemContent>
-                                                    <ItemActions>
-                                                        <ChevronRightIcon className="size-4" />
-                                                    </ItemActions>
-                                                </Link>
-                                            </Item>
-                                        </CardFooter>
                                     </Card>
                                 )
                             })}
