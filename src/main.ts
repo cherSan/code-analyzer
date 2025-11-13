@@ -36,7 +36,10 @@ export async function main(): Promise<void> {
     let testedFiles = 0;
     let missedTestedFiles = 0;
     let invalidTestedFiles = 0;
-    let totalCoverage = 0;
+    let totalCoveragePct = 0;
+    let filesCounted = 0;
+    let totalTests = 0;
+    let failedTests = 0;
 
     for (const filePath of typescriptFiles) {
         console.log(chalk.gray(`\n🔍 Analyzing: ${filePath}`));
@@ -52,12 +55,34 @@ export async function main(): Promise<void> {
 
         if (testReport.unit && testReport.unit.exist) {
             testedFiles++;
-            totalCoverage += 1;
+            if (testReport.unit.report) {
+                totalTests += testReport.unit.report.totalTests || 0;
+                failedTests += testReport.unit.report.testFailed || 0;
+            }
         } else if (testReport.unit && !testReport.unit.exist) {
             invalidTestedFiles++;
         } else {
             missedTestedFiles++;
         }
+        let fileCoveragePct = 0;
+        if (testReport.unit?.report?.coverage) {
+            const coverage = testReport.unit.report.coverage;
+            const fileCov = coverage[filePath] || coverage[Object.keys(coverage)[0]]; // fallback на первый файл
+            if (fileCov) {
+                const pctValues = [
+                    fileCov.statements?.pct ?? 0,
+                    fileCov.lines?.pct ?? 0,
+                    fileCov.functions?.pct ?? 0,
+                    fileCov.branches?.pct ?? 0
+                ];
+                fileCoveragePct = pctValues.reduce((a, b) => a + b, 0) / pctValues.length;
+            }
+        } else {
+            fileCoveragePct = 0;
+        }
+
+        totalCoveragePct += fileCoveragePct;
+        filesCounted++;
 
         if (prettierReport.formatted) formatedFiles++;
 
@@ -76,7 +101,7 @@ export async function main(): Promise<void> {
 
         console.log(chalk.green(`✓ Analyzed: ${filePath}`));
     }
-
+    const averageCoverage = filesCounted ? +(totalCoveragePct / filesCounted).toFixed(2) : 0;
     reportUtil.saveSummary({
         eslint: {
             total_errors: esLintTotalErrors,
@@ -90,8 +115,9 @@ export async function main(): Promise<void> {
         test: {
             tested_files: testedFiles,
             missed_tested_files: missedTestedFiles,
-            invalid_tested_files: invalidTestedFiles,
-            code_coverage: testedFiles ? totalCoverage / testedFiles : 0,
+            code_coverage: averageCoverage,
+            failed_tests: failedTests,
+            total_tests: totalTests
         },
     });
 }

@@ -1,7 +1,10 @@
 import React from 'react';
 import Link from "next/link";
 import {retrieveAnalyticData, retrieveFileAnalyticData, retrieveSummary} from "@/lib/analyzer-report";
-import {Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Header, Text} from "@/components/ui/typography";
+import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
+import {BadgeCheckIcon, ChevronRightIcon, GitCompareArrows} from "lucide-react";
 
 function CommitForm() {
     return (
@@ -44,7 +47,6 @@ export default async function AnalyzerDashboard() {
     const ClientDashboard = () => {
         const handleCommit = (title: string, description: string) => {
             const fullMessage = description ? `${title}\n\n${description}` : title;
-            // Here you would integrate with git commit API
             console.log('Commit message:', fullMessage);
         };
 
@@ -56,42 +58,120 @@ export default async function AnalyzerDashboard() {
                 </div>
 
                 <div className="stats">
-                    <div className="stat-card error">
-                        <div className="stat-number error">{summary.eslint?.total_errors || 'N/A'}</div>
-                        <div>ESLint Errors</div>
-                    </div>
-                    <div className="stat-card warning">
-                        <div className="stat-number warning">{summary.eslint?.total_warnings || 'N/A'}</div>
-                        <div>ESLint Warnings</div>
-                    </div>
-                    <div className="stat-card success">
-                        <div className="stat-number success">{summary.prettier?.formatted_files || 'N/A'}</div>
-                        <div>Prettier Formatted</div>
-                    </div>
-                    <div className="stat-card info">
-                        <div className="stat-number info">{summary.test?.tested_files || 'N/A'}</div>
-                        <div>Valid Tests</div>
-                    </div>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'error'}>{summary.eslint?.total_errors}</Header>
+                            <Text>ESLint Errors</Text>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'warning'}>{summary.eslint?.total_warnings}</Header>
+                            <Text>ESLint Warnings</Text>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'success'}>{summary.prettier?.formatted_files}</Header>
+                            <Text>Prettier Formatted</Text>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'info'}>{summary.test?.total_tests}</Header>
+                            <Text>Total Unit Tests</Text>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'success'}>{summary.test?.code_coverage}</Header>
+                            <Text>Average Unit Tests Coverage</Text>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="justify-center items-center">
+                            <Header as={'h2'} variant={'error'}>{summary.test?.failed_tests}</Header>
+                            <Text>Fail Unit Tests</Text>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="dashboard-content">
                     <div className="files-section">
-                        <h2>Analyzed Files ({report.files?.length})</h2>
                         <div className="files-grid">
                             {arrayOfReports.map((file, index) => {
                                 const fileReport = retrieveFileAnalyticData(report[file]);
-                                console.log(fileReport)
                                 return (
-                                <Link key={index} href={`/compare?file=${report[file]}`}>
-                                    <Card>
+                                    <Card key={file}>
                                         <CardHeader>
                                             <CardTitle className="file-path">{file}</CardTitle>
                                             <CardDescription>
-                                                <div className="file-stats">
-                                                    <span className="error-count">{fileReport.eslint_report?.errorCount || 'N/A'} errors</span>
-                                                    <span className="warning-count">{fileReport.eslint_report?.warningCount || 'N/A'} warnings</span>
+                                                <div className="preview-item">
+                                                    <Text className="preview-label">Prettier:</Text>
+                                                    <Text className={fileReport.prettier_report?.changes ? 'preview-changed' : 'preview-ok'}>
+                                                        {fileReport.prettier_report?.changes ? 'Formatted' : 'No changes'}
+                                                    </Text>
                                                 </div>
+                                                {
+                                                    fileReport.test_report?.unit
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Unit Tests:</span>
+                                                                <span className={fileReport.test_report?.unit.exist ? 'preview-ok' : fileReport.test_report?.unit?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.unit.exist ? 'Exist' : 'Missing'}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.e2e
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">E2E Tests:</span>
+                                                                <span className={fileReport.test_report?.e2e.exist ? 'preview-ok' : fileReport.test_report?.e2e?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.e2e.exist ? 'Exist' : 'Missing'}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
+                                                {
+                                                    fileReport.test_report?.integration
+                                                        ? (
+                                                            <div className="preview-item">
+                                                                <span className="preview-label">Component Tests:</span>
+                                                                <span className={fileReport.test_report?.integration.exist ? 'preview-ok' : fileReport.test_report?.integration?.path ? 'preview-warning' : 'preview-error'}>
+                                                                    {fileReport.test_report?.integration.exist ? 'Exist' : 'Missing'}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                        : null
+                                                }
                                             </CardDescription>
+                                            <CardAction className="flex gap-2 flex-col">
+                                                <Item variant="outline" size="sm" asChild>
+                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                            <GitCompareArrows className="size-5" />
+                                                            <ItemTitle>Compare Changes</ItemTitle>
+                                                            <ChevronRightIcon className="size-4" />
+                                                    </Link>
+                                                </Item>
+                                                <Item variant="outline" size="sm" asChild>
+                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                        <GitCompareArrows className="size-5" />
+                                                        <ItemTitle>Compare Changes</ItemTitle>
+                                                        <ChevronRightIcon className="size-4" />
+                                                    </Link>
+                                                </Item>
+                                                <Item variant="outline" size="sm" asChild>
+                                                    <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                        <GitCompareArrows className="size-5" />
+                                                        <ItemTitle>Compare Changes</ItemTitle>
+                                                        <ChevronRightIcon className="size-4" />
+                                                    </Link>
+                                                </Item>
+                                            </CardAction>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="file-preview">
@@ -107,47 +187,40 @@ export default async function AnalyzerDashboard() {
                                                         {fileReport.prettier_report?.changes ? 'Formatted' : 'No changes'}
                                                     </span>
                                                 </div>
-                                                {
-                                                    fileReport.test_report?.unit
-                                                        ? (
-                                                            <div className="preview-item">
-                                                                <span className="preview-label">Unit Tests:</span>
-                                                                <span className={fileReport.test_report?.unit.isValid ? 'preview-ok' : fileReport.test_report?.unit?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.unit.isValid ? 'Exist' : 'Missing'}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                        : null
-                                                }
-                                                {
-                                                    fileReport.test_report?.e2e
-                                                        ? (
-                                                            <div className="preview-item">
-                                                                <span className="preview-label">E2E Tests:</span>
-                                                                <span className={fileReport.test_report?.e2e.isValid ? 'preview-ok' : fileReport.test_report?.e2e?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.e2e.isValid ? 'Exist' : 'Missing'}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                        : null
-                                                }
-                                                {
-                                                    fileReport.test_report?.integration
-                                                        ? (
-                                                            <div className="preview-item">
-                                                                <span className="preview-label">Component Tests:</span>
-                                                                <span className={fileReport.test_report?.integration.isValid ? 'preview-ok' : fileReport.test_report?.integration?.path ? 'preview-warning' : 'preview-error'}>
-                                                                    {fileReport.test_report?.integration.isValid ? 'Exist' : 'Missing'}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                        : null
-                                                }
+
                                             </div>
                                         </CardContent>
+                                        <CardFooter>
+                                            <Item variant="outline" size="sm" asChild>
+                                                <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                    <ItemMedia>
+                                                        <BadgeCheckIcon className="size-5" />
+                                                    </ItemMedia>
+                                                    <ItemContent>
+                                                        <ItemTitle>Your profile has been verified.</ItemTitle>
+                                                    </ItemContent>
+                                                    <ItemActions>
+                                                        <ChevronRightIcon className="size-4" />
+                                                    </ItemActions>
+                                                </Link>
+                                            </Item>
+                                            <Item variant="outline" size="sm" asChild>
+                                                <Link key={index} href={`/compare?file=${report[file]}`}>
+                                                    <ItemMedia>
+                                                        <BadgeCheckIcon className="size-5" />
+                                                    </ItemMedia>
+                                                    <ItemContent>
+                                                        <ItemTitle>Your profile has been verified.</ItemTitle>
+                                                    </ItemContent>
+                                                    <ItemActions>
+                                                        <ChevronRightIcon className="size-4" />
+                                                    </ItemActions>
+                                                </Link>
+                                            </Item>
+                                        </CardFooter>
                                     </Card>
-                                </Link>
-                            )})}
+                                )
+                            })}
                         </div>
                     </div>
                     <Card>

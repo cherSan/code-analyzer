@@ -59,17 +59,40 @@ export interface PrettierSummary {
 export interface TestSummary {
     tested_files: number;
     missed_tested_files: number;
-    invalid_tested_files: number;
     code_coverage: number;
+    failed_tests: number;
+    total_tests: number;
 }
 
 export interface MainTestReport {
     path: string;
-    isValid: boolean;
+    exist: boolean;
+}
+
+export interface TestCoverageSummary {
+    lines?: { total: number; covered: number; skipped: number; pct: number };
+    statements?: { total: number; covered: number; skipped: number; pct: number };
+    functions?: { total: number; covered: number; skipped: number; pct: number };
+    branches?: { total: number; covered: number; skipped: number; pct: number };
+}
+
+export interface TestResultSummary {
+    status: 'passed' | 'failed' | 'skipped' | 'pending' | 'todo' | 'disabled' | 'focused';
+    error: string | null;
+}
+
+export interface TestCoverageReport {
+    coverage?: Record<string, TestCoverageSummary>;
+    totalTests: number;
+    totalTestSuites: number;
+    testPassed: number;
+    testSkipped: number;
+    testFailed: number;
+    testSummary: Record<string, Record<string, TestResultSummary>>;
 }
 
 export interface UnitTestReport extends MainTestReport {
-    coverage: number;
+    report?: TestCoverageReport;
 }
 
 export interface TestReport {

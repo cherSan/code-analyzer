@@ -59,8 +59,9 @@ export interface PrettierSummary {
 export interface TestSummary {
     tested_files: number;
     missed_tested_files: number;
-    invalid_tested_files: number;
     code_coverage: number;
+    failed_tests: number;
+    total_tests: number;
 }
 
 export interface MainTestReport {
