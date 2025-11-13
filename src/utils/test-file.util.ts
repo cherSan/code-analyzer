@@ -161,6 +161,8 @@ export class TestFileUtil {
             reporters: [],
             verbose: false,
             forceExit: false,
+            collectCoverage: true,
+            coverageDirectory: join(process.cwd(), '.code-analyzer', `tmp`),
         };
 
         console.log(chalk.gray(`Running Jest via API for: ${unitTestPath}`));
