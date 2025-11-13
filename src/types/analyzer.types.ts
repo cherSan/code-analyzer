@@ -65,18 +65,18 @@ export interface TestSummary {
 
 export interface MainTestReport {
     path: string;
-    isValid: boolean;
+    exist: boolean;
 }
 
 export interface TestCoverageSummary {
-    lines: { total: number; covered: number; skipped: number; pct: number };
-    statements: { total: number; covered: number; skipped: number; pct: number };
-    functions: { total: number; covered: number; skipped: number; pct: number };
-    branches: { total: number; covered: number; skipped: number; pct: number };
+    lines?: { total: number; covered: number; skipped: number; pct: number };
+    statements?: { total: number; covered: number; skipped: number; pct: number };
+    functions?: { total: number; covered: number; skipped: number; pct: number };
+    branches?: { total: number; covered: number; skipped: number; pct: number };
 }
 
 export interface TestResultSummary {
-    status: 'passed' | 'failed' | 'skipped';
+    status: 'passed' | 'failed' | 'skipped' | 'pending' | 'todo' | 'disabled' | 'focused';
     error: string | null;
 }
 

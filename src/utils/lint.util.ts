@@ -1,9 +1,9 @@
 import {ESLint, Linter} from 'eslint';
 import prettier from 'prettier';
+import { readFileSync } from "fs-extra";
 import { ESLintReport, PrettierReport, ESLintMessage } from '../types/analyzer.types';
 import { esLintRules } from '../configs/eslint';
 import { prettierRules } from '../configs/prettier';
-import { readFileSync } from "fs-extra";
 
 export class LintUtil {
     private eslint: ESLint;

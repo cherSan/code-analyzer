@@ -50,10 +50,10 @@ export async function main(): Promise<void> {
         esLintFixableErrors += eslintReport.fixableErrorCount || 0;
         esLintFixableWarnings += eslintReport.fixableWarningCount || 0;
 
-        if (testReport.unit && testReport.unit.isValid) {
+        if (testReport.unit && testReport.unit.exist) {
             testedFiles++;
             totalCoverage += 1;
-        } else if (testReport.unit && !testReport.unit.isValid) {
+        } else if (testReport.unit && !testReport.unit.exist) {
             invalidTestedFiles++;
         } else {
             missedTestedFiles++;

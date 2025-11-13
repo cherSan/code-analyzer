@@ -54,7 +54,7 @@ export class ReportUtil {
             writeJSONSync(filePath, report);
         } else {
             const oldReport = readJSONSync(mainReport[originalFile]);
-            if (JSON.stringify(oldReport) !== JSON.stringify(report)) writeJSONSync(mainReport[originalFile], report);
+            if (JSON.stringify(oldReport) !== JSON.stringify(report)) writeJSONSync(mainReport[originalFile], report, {spaces: 2});
         }
     }
 
