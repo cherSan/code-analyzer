@@ -2,48 +2,23 @@ import {ESLint, Linter} from 'eslint';
 import prettier from 'prettier';
 import { readFileSync } from "fs-extra";
 import { ESLintReport, PrettierReport, ESLintMessage } from '../types/analyzer.types';
-import { esLintRules } from '../configs/eslint';
-import { prettierRules } from '../configs/prettier';
+import {Config} from "../types/config.types";
 
 export class LintUtil {
-    private eslint: ESLint;
+    private readonly eslint: ESLint;
+    private readonly eslintConfig?: Linter.Config;
+    private readonly prettierConfig?: prettier.Options;
 
-    constructor() {
-        const baseConfig: Linter.Config = {
-            parser: '@typescript-eslint/parser',
-            parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: 'module',
-                ecmaFeatures: {
-                    jsx: true
-                },
-                project: './tsconfig.json',
-                warnOnUnsupportedTypeScriptVersion: false
-            },
-            env: {
-                browser: true,
-                es2020: true,
-                node: true
-            },
-            settings: {
-                react: {
-                    version: 'detect'
-                }
-            },
-            plugins: [
-                '@typescript-eslint',
-                'react',
-                'react-hooks',
-                'jsx-a11y',
-                'import'
-            ],
-            rules: esLintRules
-        };
+    constructor(config: Config) {
+        this.eslintConfig = config.eslint;
+        this.prettierConfig = config.prettier;
+
+        console.log('ESLint Config:', this.eslintConfig);
 
         this.eslint = new ESLint({
             useEslintrc: false,
             ignore: false,
-            baseConfig: baseConfig,
+            overrideConfig: this.eslintConfig,
             fix: false,
         });
     }
@@ -114,7 +89,7 @@ export class LintUtil {
             const formatted = await prettier.format(content, {
                 parser: fileInfo.inferredParser,
                 filepath: filePath,
-                ...prettierRules,
+                ...this.prettierConfig,
             });
 
             const changes = formatted !== content;

@@ -1,12 +1,19 @@
 import { runCLI } from '@jest/core';
+import { Config } from 'jest';
 import chalk from 'chalk';
 import { basename, dirname, extname, join } from 'path';
 import { CoverageMap } from 'istanbul-lib-coverage';
 import { pathExistsSync } from 'fs-extra';
-import type { Config } from '@jest/types';
+import { Config as MainConfig } from '../types/config.types';
 import {TestCoverageReport, TestCoverageSummary, TestReport, TestResultSummary} from '../types/analyzer.types';
 
 export class TestFileUtil {
+    jestConfig?: Config;
+
+    constructor(config: MainConfig) {
+        this.jestConfig = config.jest;
+    }
+
     buildCoverageSummary(coverageMap?: CoverageMap | null): Record<string, TestCoverageSummary> {
         if (!coverageMap) return {};
 
@@ -75,6 +82,13 @@ export class TestFileUtil {
     }
 
     async checkTestFile(filePath: string): Promise<TestReport> {
+        if (!this.jestConfig) {
+            return {
+                unit: undefined,
+                e2e: undefined,
+                integration: undefined,
+            };
+        }
         const dir = dirname(filePath);
         const filename = basename(filePath, extname(filePath));
         const ext = extname(filePath);
@@ -154,20 +168,9 @@ export class TestFileUtil {
         const unitTestPath = join(dir, `${filename}.test.tsx`);
         if (!pathExistsSync(unitTestPath)) return undefined;
 
-        const jestConfig: Config.InitialOptions = {
-            rootDir: process.cwd(),
-            silent: true,
-            testMatch: [unitTestPath],
-            reporters: [],
-            verbose: false,
-            forceExit: false,
-            collectCoverage: true,
-            coverageDirectory: join(process.cwd(), '.code-analyzer', `tmp`),
-        };
-
         console.log(chalk.gray(`Running Jest via API for: ${unitTestPath}`));
 
-        const result = await runCLI(jestConfig as any, [process.cwd()]);
+        const result = await runCLI(this.jestConfig as any, [process.cwd()]);
         const jestJson = result.results;
 
         if (!jestJson) {

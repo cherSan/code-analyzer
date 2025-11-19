@@ -1,17 +1,20 @@
 import chalk from 'chalk';
-import {readFileSync} from "fs-extra";
+import { readFileSync } from "fs-extra";
 import { GitUtil } from './utils/git.util';
 import { ReportUtil } from './utils/report.util';
 import { LintUtil } from './utils/lint.util';
 import { TestFileUtil } from './utils/test-file.util';
+import { loadProjectConfig } from "./config";
 
 export async function main(): Promise<void> {
     console.log(chalk.blue('🚀 Code Analyzer started!'));
 
+    const config = loadProjectConfig();
+
     const gitUtil = new GitUtil();
     const reportUtil = new ReportUtil();
-    const lintUtil = new LintUtil();
-    const testFileUtil = new TestFileUtil();
+    const lintUtil = new LintUtil(config);
+    const testFileUtil = new TestFileUtil(config);
 
     if (!await gitUtil.isGitRepository()) {
         console.error(chalk.red('❌ Not a git repository!'));
