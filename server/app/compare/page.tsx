@@ -34,6 +34,7 @@ function FileComparison({
                 originalContent={original_file_content || ''}
                 lintedContent={linted_file_content || ''}
                 fileName={original_file_path || ''}
+                eslintMessages={eslint_report?.messages || []}
             />
 
             <div className="changes-summary">

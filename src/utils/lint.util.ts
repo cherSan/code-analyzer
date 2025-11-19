@@ -13,8 +13,6 @@ export class LintUtil {
         this.eslintConfig = config.eslint;
         this.prettierConfig = config.prettier;
 
-        console.log('ESLint Config:', this.eslintConfig);
-
         this.eslint = new ESLint({
             useEslintrc: false,
             ignore: false,
